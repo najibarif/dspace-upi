@@ -1,4 +1,46 @@
-const columns = new Array(6).fill(0);
+const faculties = [
+  {
+    name: "FPMIPA",
+    items: ["Matematika", "Fisika", "Kimia", "Ilmu Komputer"],
+  },
+  {
+    name: "FPTK",
+    items: [
+      "Teknik Elektro",
+      "Teknik Mesin",
+      "Teknik Sipil",
+      "Pendidikan Teknologi",
+    ],
+  },
+  {
+    name: "FPBS",
+    items: [
+      "Bahasa Indonesia",
+      "Bahasa Inggris",
+      "Bahasa Jepang",
+      "Bahasa Arab",
+    ],
+  },
+  { name: "FPOK", items: ["Ilmu Keolahragaan", "PJKR", "PKO", "Gizi"] },
+  {
+    name: "FIP",
+    items: [
+      "Administrasi Pendidikan",
+      "Psikologi Pendidikan",
+      "Teknologi Pendidikan",
+      "Pendidikan Masyarakat",
+    ],
+  },
+  {
+    name: "FPEB",
+    items: ["Manajemen", "Akuntansi", "Ekonomi", "Ekonomi Syariah"],
+  },
+  { name: "FPSD", items: ["Seni Rupa", "Seni Musik", "DKV"] },
+  {
+    name: "FPIPS",
+    items: ["Pendidikan Sejarah", "SPIG", "Pendidikan IPS"],
+  },
+];
 
 export default function SectionFaculty() {
   return (
@@ -8,14 +50,14 @@ export default function SectionFaculty() {
           Faculty
         </h3>
         <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 text-sm md:text-base text-gray-800'>
-          {columns.map((_, idx) => (
-            <div key={idx} className='space-y-3'>
-              <div className='font-semibold'>Lorem ipsum dolor sit amet</div>
-              <div className='text-gray-600'>Lorem ipsum dolor sit amet</div>
-              <div className='font-semibold'>Lorem ipsum dolor sit amet</div>
-              <div className='text-gray-600'>Lorem ipsum dolor sit amet</div>
-              <div className='font-semibold'>Lorem ipsum dolor sit amet</div>
-              <div className='text-gray-600'>Lorem ipsum dolor sit amet</div>
+          {faculties.map((f) => (
+            <div key={f.name} className='space-y-3'>
+              <div className='font-semibold'>{f.name}</div>
+              {f.items.slice(0, 5).map((item, i) => (
+                <div key={i} className='text-gray-600'>
+                  {item}
+                </div>
+              ))}
             </div>
           ))}
         </div>

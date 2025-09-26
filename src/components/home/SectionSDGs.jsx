@@ -28,6 +28,16 @@ const sdgTitles = [
   "Partnerships for the Goals",
 ];
 
+const dummyCounts = {
+  profiles: [
+    149, 87, 203, 56, 112, 98, 76, 190, 65, 88, 140, 120, 73, 54, 69, 101, 95,
+  ],
+  outputs: [
+    192, 210, 156, 88, 134, 178, 99, 220, 77, 93, 145, 160, 80, 67, 70, 115,
+    130,
+  ],
+};
+
 export default function SectionSDGs() {
   const sdgs = useMemo(
     () => new Array(17).fill(0).map((_, i) => getSdgImageUrl(i)),
@@ -114,7 +124,9 @@ export default function SectionSDGs() {
                           />
                         </svg>
                       </span>
-                      <span className='font-semibold text-[#D52727]'>149</span>
+                      <span className='font-semibold text-[#D52727]'>
+                        {dummyCounts.profiles[i]}
+                      </span>
                       <span className='text-sm text-gray-800'>Profiles</span>
                     </a>
                     <a
@@ -131,7 +143,9 @@ export default function SectionSDGs() {
                           <path d='M12 6.75a.75.75 0 01.75.75v8.69l2.72-2.72a.75.75 0 111.06 1.06l-4 4a.75.75 0 01-1.06 0l-4-4a.75.75 0 111.06-1.06l2.72 2.72V7.5A.75.75 0 0112 6.75z' />
                         </svg>
                       </span>
-                      <span className='font-semibold text-[#D52727]'>192</span>
+                      <span className='font-semibold text-[#D52727]'>
+                        {dummyCounts.outputs[i]}
+                      </span>
                       <span className='text-sm text-gray-800'>
                         Research output
                       </span>
@@ -189,7 +203,9 @@ export default function SectionSDGs() {
                     />
                   </svg>
                 </span>
-                <span className='font-semibold text-[#D52727]'>149</span>
+                <span className='font-semibold text-[#D52727]'>
+                  {dummyCounts.profiles[activeIdx]}
+                </span>
                 <span className='text-sm text-gray-800'>Profiles</span>
               </a>
               <a
@@ -206,7 +222,9 @@ export default function SectionSDGs() {
                     <path d='M12 6.75a.75.75 0 01.75.75v8.69l2.72-2.72a.75.75 0 111.06 1.06l-4 4a.75.75 0 01-1.06 0l-4-4a.75.75 0 111.06-1.06l2.72 2.72V7.5A.75.75 0 0112 6.75z' />
                   </svg>
                 </span>
-                <span className='font-semibold text-[#D52727]'>192</span>
+                <span className='font-semibold text-[#D52727]'>
+                  {dummyCounts.outputs[activeIdx]}
+                </span>
                 <span className='text-sm text-gray-800'>Research output</span>
               </a>
             </div>
