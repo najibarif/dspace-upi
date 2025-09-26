@@ -1,15 +1,15 @@
 import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import SDGs from "./components/SDGs";
+import Home from "./pages/Home";
 import Footer from "./components/Footer";
+import BackToTop from "./components/BackToTop";
 
 export default function App() {
   return (
-    <div className="font-sans bg-gray-100">
+    <div className='font-sans bg-gray-100 pt-[64px] md:pt-[104px]'>
       <Navbar />
-      <Hero />
-      <SDGs />
+      <Home />
       <Footer />
+      <BackToTop />
     </div>
   );
 }
