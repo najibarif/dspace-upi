@@ -4,14 +4,15 @@ import logoUpi from "../assets/logo-upi.png";
 import logoLppm from "../assets/logo-lppm.png";
 
 const navItems = [
-  { label: "Home", href: "#" },
-  { label: "Profiles", href: "#" },
-  { label: "Research Units", href: "#" },
-  { label: "Research Output", href: "#" },
-  { label: "Facility", href: "#" },
-  { label: "Projects", href: "#" },
-  { label: "Activities", href: "#" },
-  { label: "Press/Media", href: "#" },
+  { label: "Home", href: "/" },
+  { label: "Profiles", href: "/profiles" },
+  { label: "Organization", href: "/organization" },
+  { label: "Paper", href: "/paper" },
+  { label: "Project", href: "/project" },
+  { label: "Patent", href: "/patent" },
+  { label: "Outreach", href: "/outreach" },
+  { label: "Thesis", href: "/thesis" },
+  { label: "Equipment", href: "/equipment" },
 ];
 
 export default function Navbar() {
@@ -55,36 +56,43 @@ export default function Navbar() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
     };
-  }, []);
+  }, [isDesktop]);
 
   return (
-    <header className='fixed top-0 left-0 right-0 z-50 text-white bg-[#D52727]'>
-      <div className='w-full px-6 md:px-24 py-3 flex items-center'>
-        <div className='flex-1 min-w-0 flex items-center gap-3'>
-          <img src={logoUpi} alt='Logo UPI' className='h-8 md:h-10 w-auto' />
-          <img src={logoLppm} alt='Logo LPPM' className='h-7 md:h-9 w-auto' />
+    <header className="fixed top-0 left-0 right-0 z-50 text-white bg-[#D52727]">
+      <div className="w-full px-6 md:px-24 py-3 flex items-center">
+        {/* Logo */}
+        <div className="flex-1 min-w-0 flex items-center gap-3">
+          <img src={logoUpi} alt="Logo UPI" className="h-8 md:h-10 w-auto" />
+          <img src={logoLppm} alt="Logo LPPM" className="h-7 md:h-9 w-auto" />
         </div>
 
+        {/* Mobile button */}
         <button
-          className='md:hidden inline-flex items-center justify-center rounded-md px-3 py-2 bg-white/10 hover:bg-white/20 transition ml-3 shrink-0'
-          aria-label='Toggle Menu'
+          className="md:hidden inline-flex items-center justify-center rounded-md px-3 py-2 bg-white/10 hover:bg-white/20 transition ml-3 shrink-0"
+          aria-label="Toggle Menu"
           onClick={() => setMobileOpen((v) => !v)}
         >
           <svg
-            xmlns='http://www.w3.org/2000/svg'
-            viewBox='0 0 24 24'
-            fill='currentColor'
-            className='w-6 h-6'
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="w-6 h-6"
           >
             <path
-              fillRule='evenodd'
-              d='M3.75 5.25a.75.75 0 01.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75zm0 6.75c0-.414.336-.75.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75zm.75 6a.75.75 0 000 1.5h15a.75.75 0 000-1.5h-15z'
-              clipRule='evenodd'
+              fillRule="evenodd"
+              d="M3.75 5.25a.75.75 0 01.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75zm0 
+                 6.75c0-.414.336-.75.75-.75h15a.75.75 0 
+                 010 1.5h-15a.75.75 0 01-.75-.75zm.75 
+                 6a.75.75 0 000 1.5h15a.75.75 0 
+                 000-1.5h-15z"
+              clipRule="evenodd"
             />
           </svg>
         </button>
       </div>
 
+      {/* Desktop nav */}
       <motion.nav
         initial={{ height: 48, opacity: 1 }}
         animate={{
@@ -92,9 +100,9 @@ export default function Navbar() {
           opacity: showNav ? 1 : 0,
         }}
         transition={{ type: "tween", duration: 0.25 }}
-        className='w-full md:border-t md:border-white/20 overflow-hidden'
+        className="w-full md:border-t md:border-white/20 overflow-hidden"
       >
-        <div className='hidden md:flex items-center justify-between w-full px-6 md:px-36 h-12'>
+        <div className="hidden md:flex items-center justify-between w-full px-6 md:px-36 h-12">
           {navItems.map((item) => (
             <a
               key={item.label}
@@ -111,7 +119,8 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className='md:hidden'>
+        {/* Mobile nav */}
+        <div className="md:hidden">
           <motion.div
             initial={false}
             animate={{
@@ -119,9 +128,9 @@ export default function Navbar() {
               opacity: mobileOpen && showNav ? 1 : 0,
             }}
             transition={{ duration: 0.25 }}
-            className='overflow-hidden'
+            className="overflow-hidden"
           >
-            <div className='px-6 py-3 grid grid-cols-2 gap-3'>
+            <div className="px-6 py-3 grid grid-cols-2 gap-3">
               {navItems.map((item) => (
                 <a
                   key={item.label}
