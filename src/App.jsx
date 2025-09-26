@@ -2,6 +2,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import BackToTop from "./components/BackToTop";
+import Outreach from "./pages/Outreach";
+import Thesis from "./pages/Thesis";
+import Equipments from "./pages/Equipments";
 
 import Home from "./pages/Home";
 import Paper from "./pages/Paper";
@@ -20,6 +23,9 @@ export default function App() {
           <Route path="/paper" element={<Paper />} />
           <Route path="/patent" element={<Patent />} />
           <Route path="/project" element={<Project />} />
+          <Route path="/Outreach" element={<Outreach />} />
+        <Route path="/Thesis" element={<Thesis />} />
+        <Route path="/Equipments" element={<Equipments />} />
         </Routes>
 
         <Footer />

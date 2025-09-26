@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import logoUpi from "../assets/logo-upi.png";
 import logoLppm from "../assets/logo-lppm.png";
+import { Link } from "react-router-dom";
 
 const navItems = [
   { label: "Home", href: "/" },
+<<<<<<< HEAD
   { label: "Profiles", href: "/profiles" },
   { label: "Organization", href: "/organization" },
   { label: "Paper", href: "/paper" },
@@ -13,6 +15,16 @@ const navItems = [
   { label: "Outreach", href: "/outreach" },
   { label: "Thesis", href: "/thesis" },
   { label: "Equipment", href: "/equipment" },
+=======
+  { label: "Profiles", href: "#" },
+  { label: "Organization", href: "#" },
+  { label: "Paper", href: "#" },
+  { label: "Project", href: "#" },
+  { label: "Patent", href: "#" },
+  { label: "Outreach", href: "/Outreach" },
+  { label: "Thesis", href: "/Thesis" },
+  { label: "Equipments", href: "/Equipments" },
+>>>>>>> 4c28e1f2b07ab562aeeb0d8c2746cbeaa8723725
 ];
 
 export default function Navbar() {
@@ -61,7 +73,10 @@ export default function Navbar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 text-white bg-[#D52727]">
       <div className="w-full px-6 md:px-24 py-3 flex items-center">
+<<<<<<< HEAD
         {/* Logo */}
+=======
+>>>>>>> 4c28e1f2b07ab562aeeb0d8c2746cbeaa8723725
         <div className="flex-1 min-w-0 flex items-center gap-3">
           <img src={logoUpi} alt="Logo UPI" className="h-8 md:h-10 w-auto" />
           <img src={logoLppm} alt="Logo LPPM" className="h-7 md:h-9 w-auto" />
@@ -81,11 +96,15 @@ export default function Navbar() {
           >
             <path
               fillRule="evenodd"
+<<<<<<< HEAD
               d="M3.75 5.25a.75.75 0 01.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75zm0 
                  6.75c0-.414.336-.75.75-.75h15a.75.75 0 
                  010 1.5h-15a.75.75 0 01-.75-.75zm.75 
                  6a.75.75 0 000 1.5h15a.75.75 0 
                  000-1.5h-15z"
+=======
+              d="M3.75 5.25a.75.75 0 01.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75zm0 6.75c0-.414.336-.75.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75zm.75 6a.75.75 0 000 1.5h15a.75.75 0 000-1.5h-15z"
+>>>>>>> 4c28e1f2b07ab562aeeb0d8c2746cbeaa8723725
               clipRule="evenodd"
             />
           </svg>
@@ -102,11 +121,15 @@ export default function Navbar() {
         transition={{ type: "tween", duration: 0.25 }}
         className="w-full md:border-t md:border-white/20 overflow-hidden"
       >
+<<<<<<< HEAD
+=======
+        {/* Desktop Menu */}
+>>>>>>> 4c28e1f2b07ab562aeeb0d8c2746cbeaa8723725
         <div className="hidden md:flex items-center justify-between w-full px-6 md:px-36 h-12">
           {navItems.map((item) => (
-            <a
+            <Link
               key={item.label}
-              href={item.href}
+              to={item.href}
               onClick={() => setActiveItem(item.label)}
               className={`text-sm font-medium transition whitespace-nowrap ${
                 activeItem === item.label
@@ -115,11 +138,15 @@ export default function Navbar() {
               }`}
             >
               {item.label}
-            </a>
+            </Link>
           ))}
         </div>
 
+<<<<<<< HEAD
         {/* Mobile nav */}
+=======
+        {/* Mobile Menu */}
+>>>>>>> 4c28e1f2b07ab562aeeb0d8c2746cbeaa8723725
         <div className="md:hidden">
           <motion.div
             initial={false}
@@ -132,9 +159,9 @@ export default function Navbar() {
           >
             <div className="px-6 py-3 grid grid-cols-2 gap-3">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.label}
-                  href={item.href}
+                  to={item.href}
                   className={`text-sm font-medium transition ${
                     activeItem === item.label
                       ? "text-white"
@@ -146,7 +173,7 @@ export default function Navbar() {
                   }}
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
             </div>
           </motion.div>
