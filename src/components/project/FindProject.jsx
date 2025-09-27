@@ -1,10 +1,12 @@
 export default function FindProject() {
   return (
-    <section className='bg-[#F5F5F5] min-h-[300px] flex flex-col items-center justify-center'>
+    <section className='bg-[#F5F5F5] min-h-[300px] flex flex-col items-center justify-center pt-24'>
       <div className='text-center w-full max-w-4xl mx-auto px-4'>
         {/* Judul + Icon */}
         <h2 className='text-4xl font-bold mb-8 flex items-center justify-center gap-2'>
-          <span className="material-symbols-outlined !text-4xl">donut_large</span>
+          <span className='material-symbols-outlined !text-4xl'>
+            donut_large
+          </span>
           Find Project
         </h2>
 
