@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import logoUpi from "../assets/logo-upi.png";
 import logoLppm from "../assets/logo-lppm.png";
 import { Link, useLocation } from "react-router-dom";
+import { FaBars } from "react-icons/fa";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -85,22 +86,7 @@ export default function Navbar() {
               setMobileOpen((v) => !v);
             }}
           >
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              viewBox='0 0 24 24'
-              fill='currentColor'
-              className='w-6 h-6'
-            >
-              <path
-                fillRule='evenodd'
-                d='M3.75 5.25a.75.75 0 01.75-.75h15a.75.75 0 010 1.5h-15a.75.75 0 01-.75-.75zm0 
-                   6.75c0-.414.336-.75.75-.75h15a.75.75 0 
-                   010 1.5h-15a.75.75 0 01-.75-.75zm.75 
-                   6a.75.75 0 000 1.5h15a.75.75 0 
-                   000-1.5h-15z'
-                clipRule='evenodd'
-              />
-            </svg>
+            <FaBars className='w-6 h-6' />
           </button>
         )}
       </div>
