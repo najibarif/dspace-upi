@@ -1,5 +1,5 @@
-import { useState } from "react";
-import FindProject from "../components/home/FindProject";
+import { useState, useMemo } from "react";
+import FindProject from "../components/project/FindProject";
 
 // Komponen Section Sidebar (reusable)
 function SidebarSection({ title, items }) {
@@ -8,24 +8,22 @@ function SidebarSection({ title, items }) {
 
   return (
     <div className="mb-6">
-      <h3 className="font-medium">{title}</h3>
-      <div className="mt-2 space-y-2 text-sm">
+      <h3 className="font-medium text-sm mb-2">{title}</h3>
+      <div className="space-y-2 text-sm text-gray-600">
         {visibleItems.map((item, idx) => (
           <label key={idx} className="flex items-center gap-2">
             <input type="checkbox" />
             <span className="flex-1">{item.name}</span>
-            {item.count && (
-              <span className="text-gray-500">({item.count})</span>
-            )}
+            {item.count && <span className="text-gray-500">({item.count})</span>}
           </label>
         ))}
       </div>
       {items.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="text-blue-500 text-sm mt-1"
+          className="text-blue-600 text-sm mt-2"
         >
-          {showAll ? "Show less" : "Show more"}
+          {showAll ? "Show less" : "See more >"}
         </button>
       )}
     </div>
@@ -64,93 +62,108 @@ const sidebarData = {
   ],
 };
 
+// Dummy Project List agar bisa di-sort
+const dummyProjects = Array.from({ length: 6 }).map((_, idx) => ({
+  title: `Lorem ipsum dolor sit amet, consectetur adipiscing elit ${idx + 1}`,
+  lead: "Lorem Ipsum",
+  organization: "Dolor Sit Amet Institute",
+  type: idx % 2 === 0 ? "Research Project" : "Industrial Collaboration",
+  duration: `${2020 + idx}–${2021 + idx}`,
+  status: idx % 2 === 0 ? "Ongoing" : "Completed",
+}));
+
 export default function Project() {
+  const [sortAsc, setSortAsc] = useState(true);
+
+  // Filter & Sort
+  const sortedProjects = useMemo(() => {
+    const data = [...dummyProjects];
+    return data.sort((a, b) =>
+      sortAsc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
+    );
+  }, [sortAsc]);
+
   return (
     <section className="bg-gray-50 min-h-screen">
       <FindProject />
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar Filter */}
-          <aside className="bg-white p-4 rounded shadow h-fit">
-            <h2 className="font-semibold mb-4">Filter for Project</h2>
-            <select className="w-full border p-2 rounded mb-6">
-              <option>Please select Sort By</option>
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 flex gap-8">
+        {/* Sidebar Filter */}
+        <aside className="w-64 hidden md:block bg-white shadow-sm rounded-md p-4 h-fit">
+          <h2 className="font-semibold mb-4">Filters for Project</h2>
+
+          {/* Sort */}
+          <div className="mb-4">
+            <h3 className="font-medium text-sm mb-2">Sort By</h3>
+            <select
+              className="w-full border p-2 rounded text-sm"
+              value={sortAsc ? "asc" : "desc"}
+              onChange={(e) => setSortAsc(e.target.value === "asc")}
+            >
+              <option value="asc">Title (A–Z)</option>
+              <option value="desc">Title (Z–A)</option>
             </select>
+          </div>
 
-            <SidebarSection title="Sustainable Development Goals" items={sidebarData.sdg} />
-            <SidebarSection title="Concepts" items={sidebarData.concepts} />
-            <SidebarSection title="Profile" items={sidebarData.profile} />
-            <SidebarSection title="Type" items={sidebarData.type} />
+          <SidebarSection title="Sustainable Development Goals" items={sidebarData.sdg} />
+          <SidebarSection title="Concepts" items={sidebarData.concepts} />
+          <SidebarSection title="Profile" items={sidebarData.profile} />
+          <SidebarSection title="Type" items={sidebarData.type} />
 
-            {/* Year (khusus range input) */}
-            <div className="mb-6">
-              <h3 className="font-medium">Year</h3>
-              <div className="mt-2 flex items-center gap-2 text-sm">
-                <input
-                  type="number"
-                  placeholder="From"
-                  className="w-1/2 border p-2 rounded"
-                />
-                <span>to</span>
-                <input
-                  type="number"
-                  placeholder="To"
-                  className="w-1/2 border p-2 rounded"
-                />
-              </div>
+          {/* Year range */}
+          <div className="mb-6">
+            <h4 className="font-medium text-sm mb-2">Year</h4>
+            <div className="flex items-center gap-2 text-sm mt-2">
+              <input
+                type="number"
+                placeholder="From"
+                className="w-1/2 border p-2 rounded"
+              />
+              <span>to</span>
+              <input
+                type="number"
+                placeholder="To"
+                className="w-1/2 border p-2 rounded"
+              />
             </div>
-          </aside>
+          </div>
+        </aside>
 
-          {/* Result List */}
-          <main className="lg:col-span-3">
-            <p className="text-gray-600 mb-4">Result 152 for 152</p>
-            <div className="space-y-6">
-              {/* Project Dummy */}
-              {Array.from({ length: 6 }).map((_, idx) => (
-                <article key={idx} className="bg-white p-4 rounded shadow">
-                  <h3 className="font-bold">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit{" "}
-                    {idx + 1}
-                  </h3>
-                  <p className="text-sm text-gray-600">Lead: Lorem Ipsum</p>
-                  <p className="text-sm text-gray-600">
-                    Organization: Dolor Sit Amet Institute
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
-                    <span>
-                      Type:{" "}
-                      {idx % 2 === 0
-                        ? "Research Project"
-                        : "Industrial Collaboration"}
-                    </span>
-                    <span>|</span>
-                    <span>
-                      Duration: {2020 + idx}–{2021 + idx}
-                    </span>
-                    <span>|</span>
-                    <span>
-                      Status: {idx % 2 === 0 ? "Ongoing" : "Completed"}
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex flex-wrap justify-center mt-8 gap-2">
-              <button className="px-3 py-1 border rounded">First</button>
-              <button className="px-3 py-1 border rounded">Prev</button>
-              <button className="px-3 py-1 border rounded bg-[#D52727] text-white">
-                1
+        {/* Main Content */}
+        <main className="flex-1">
+          {/* Summary row */}
+          <div className="flex items-center justify-between border-b pb-3 mb-6">
+            <p className="text-sm text-gray-600">
+              1 - {sortedProjects.length} out of {dummyProjects.length} results
+            </p>
+            <div className="flex items-center gap-5 text-sm">
+              <button
+                className="text-gray-700"
+                onClick={() => setSortAsc((v) => !v)}
+              >
+                Sort by Title ({sortAsc ? "ascending" : "descending"}) &gt;
               </button>
-              <button className="px-3 py-1 border rounded">2</button>
-              <button className="px-3 py-1 border rounded">Next</button>
-              <button className="px-3 py-1 border rounded">Last</button>
             </div>
-          </main>
-        </div>
+          </div>
+
+          {/* List */}
+          <div className="space-y-6">
+            {sortedProjects.map((project, idx) => (
+              <article key={idx} className="border-b pb-4">
+                <h2 className="font-semibold text-lg text-gray-900">{project.title}</h2>
+                <p className="text-sm text-gray-600">Lead: {project.lead}</p>
+                <p className="text-sm text-gray-600">Organization: {project.organization}</p>
+                <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
+                  <span>Type: {project.type}</span>
+                  <span>|</span>
+                  <span>Duration: {project.duration}</span>
+                  <span>|</span>
+                  <span>Status: {project.status}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </main>
       </div>
     </section>
   );

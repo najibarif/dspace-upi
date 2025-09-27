@@ -1,5 +1,5 @@
-import { useState } from "react";
-import FindPaper from "../components/home/FindPaper";
+import { useState, useMemo } from "react";
+import FindPaper from "../components/paper/FindPaper";
 
 // Komponen Section Sidebar
 function SidebarSection({ title, items }) {
@@ -8,22 +8,24 @@ function SidebarSection({ title, items }) {
 
   return (
     <div className="mb-6">
-      <h3 className="font-medium">{title}</h3>
-      <div className="mt-2 space-y-2 text-sm">
+      <h3 className="font-medium text-sm mb-2">{title}</h3>
+      <div className="space-y-2 text-sm text-gray-600">
         {visibleItems.map((item, idx) => (
           <label key={idx} className="flex items-center gap-2">
             <input type="checkbox" />
             <span className="flex-1">{item.name}</span>
-            {item.count && <span className="text-gray-500">({item.count})</span>}
+            {item.count && (
+              <span className="text-gray-500">({item.count})</span>
+            )}
           </label>
         ))}
       </div>
       {items.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="text-blue-500 text-sm mt-1"
+          className="text-blue-600 text-sm mt-2"
         >
-          {showAll ? "Show less" : "Show more"}
+          {showAll ? "Show less" : "See more >"}
         </button>
       )}
     </div>
@@ -69,75 +71,103 @@ const sidebarData = {
   ],
 };
 
+// Dummy Paper List (agar bisa di-sort)
+const dummyPapers = Array.from({ length: 6 }).map((_, idx) => ({
+  title: `Lorem ipsum dolor sit amet, consectetur adipiscing elit ${idx + 1}`,
+  link: `https://doi.org/10.xxxx/lorem-${idx + 1}`,
+  authors: "Lorem Ipsum, Dolor Sit",
+  organization: "Consectetur Institute",
+  year: 2020 + idx,
+  cite: Math.floor(Math.random() * 100),
+}));
+
 export default function Paper() {
+  const [sortAsc, setSortAsc] = useState(true);
+
+  // Filter & Sort
+  const sortedPapers = useMemo(() => {
+    const data = [...dummyPapers]; // copy array
+    return data.sort((a, b) =>
+      sortAsc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
+    );
+  }, [sortAsc]);
+
   return (
     <section className="bg-gray-50 min-h-screen">
       <FindPaper />
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar Filter */}
-          <aside className="bg-white p-4 rounded shadow h-fit">
-            <h2 className="font-semibold mb-4">Filter for Paper</h2>
-            <select className="w-full border p-2 rounded mb-6">
-              <option>Please select Sort By</option>
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 flex gap-8">
+        {/* Sidebar Filter */}
+        <aside className="w-64 hidden md:block bg-white shadow-sm rounded-md p-4 h-fit">
+          <h2 className="font-semibold mb-4">Filters for Paper</h2>
+
+          {/* Sort */}
+          <div className="mb-4">
+            <h4 className="font-medium text-sm mb-2">Sort By</h4>
+            <select
+              className="w-full border p-2 rounded text-sm"
+              value={sortAsc ? "asc" : "desc"}
+              onChange={(e) => setSortAsc(e.target.value === "asc")}
+            >
+              <option value="asc">Title (A–Z)</option>
+              <option value="desc">Title (Z–A)</option>
             </select>
+          </div>
 
-            <SidebarSection
-              title="Sustainable Development Goals"
-              items={sidebarData.sdg}
-            />
-            <SidebarSection title="Concepts" items={sidebarData.concepts} />
-            <SidebarSection title="Profile" items={sidebarData.profile} />
-            <SidebarSection title="Type" items={sidebarData.type} />
-            <SidebarSection title="SJR" items={sidebarData.sjr} />
-          </aside>
+          {/* Sidebar Sections */}
+          <SidebarSection
+            title="Sustainable Development Goals"
+            items={sidebarData.sdg}
+          />
+          <SidebarSection title="Concepts" items={sidebarData.concepts} />
+          <SidebarSection title="Profile" items={sidebarData.profile} />
+          <SidebarSection title="Type" items={sidebarData.type} />
+          <SidebarSection title="SJR" items={sidebarData.sjr} />
 
-          {/* Result List */}
-          <main className="lg:col-span-3">
-            <p className="text-gray-600 mb-4">Result 27317 for 27317</p>
-            <div className="space-y-6">
-              {/* Artikel Dummy */}
-              {Array.from({ length: 6 }).map((_, idx) => (
-                <article key={idx} className="bg-white p-4 rounded shadow">
-                  <h3 className="font-bold">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit{" "}
-                    {idx + 1}
-                  </h3>
-                  <a href="#" className="text-sm text-blue-600 break-words">
-                    https://doi.org/10.xxxx/lorem-{idx + 1}
-                  </a>
-                  <p className="text-sm text-gray-600">
-                    Authors: Lorem Ipsum, Dolor Sit
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Organization: Consectetur Institute
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
-                    <span>Journal</span>
-                    <span>|</span>
-                    <span>Cite {Math.floor(Math.random() * 100)}</span>
-                    <span>|</span>
-                    <span>Year {2020 + (idx % 6)}</span>
-                  </div>
-                </article>
-              ))}
-            </div>
+          
+        </aside>
 
-            {/* Pagination */}
-            <div className="flex flex-wrap justify-center mt-8 gap-2">
-              <button className="px-3 py-1 border rounded">First</button>
-              <button className="px-3 py-1 border rounded">Prev</button>
-              <button className="px-3 py-1 border rounded bg-[#D52727] text-white">
-                1
+        {/* Results */}
+        <main className="flex-1">
+          {/* Summary row */}
+          <div className="flex items-center justify-between border-b pb-3 mb-6">
+            <p className="text-sm text-gray-600">
+              1 - {sortedPapers.length} out of {dummyPapers.length} results
+            </p>
+            <div className="flex items-center gap-5 text-sm">
+              <button
+                className="text-gray-700"
+                onClick={() => setSortAsc((v) => !v)}
+              >
+                Sort by title ({sortAsc ? "ascending" : "descending"}) &gt;
               </button>
-              <button className="px-3 py-1 border rounded">2</button>
-              <button className="px-3 py-1 border rounded">Next</button>
-              <button className="px-3 py-1 border rounded">Last</button>
             </div>
-          </main>
-        </div>
+          </div>
+
+          {/* List */}
+          <div className="space-y-6">
+            {sortedPapers.map((paper, idx) => (
+              <article key={idx} className="border-b pb-4">
+                <h2 className="font-semibold text-lg text-gray-900">{paper.title}</h2>
+                <a
+                  href={paper.link}
+                  className="text-sm text-blue-600 break-words block"
+                >
+                  {paper.link}
+                </a>
+                <p className="text-sm text-gray-600">Authors: {paper.authors}</p>
+                <p className="text-sm text-gray-600">Organization: {paper.organization}</p>
+                <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
+                  <span>Journal</span>
+                  <span>|</span>
+                  <span>Cite {paper.cite}</span>
+                  <span>|</span>
+                  <span>Year {paper.year}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </main>
       </div>
     </section>
   );
