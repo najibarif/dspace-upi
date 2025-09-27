@@ -94,9 +94,68 @@ export default function Navbar() {
         transition={{ type: "tween", duration: 0.25 }}
         className='bg-black overflow-hidden'
       >
-        <div className='py-4'>
-          <div className='mx-auto px-6 md:px-24'>
-            <div className='flex flex-wrap justify-end gap-4'>
+        <div className='py-2 md:py-4'>
+          <div className='mx-auto px-3 md:px-24'>
+            <div className='md:hidden'>
+              <div className='flex flex-wrap justify-center items-center gap-1.5'>
+                <a
+                  href='https://sinta.kemdiktisaintek.go.id/affiliations/profile/414'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-xs font-medium transition text-white hover:text-white/80 px-1.5 py-0.5'
+                >
+                  SINTA UPI
+                </a>
+                <span className='text-white/40 text-xs'>•</span>
+                <a
+                  href='https://litabmas.upi.edu/'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-xs font-medium transition text-white hover:text-white/80 px-1.5 py-0.5'
+                >
+                  Litabmas UPI
+                </a>
+                <span className='text-white/40 text-xs'>•</span>
+                <a
+                  href='https://kkn.upi.edu/login'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-xs font-medium transition text-white hover:text-white/80 px-1.5 py-0.5'
+                >
+                  KKN
+                </a>
+                <span className='text-white/40 text-xs'>•</span>
+                <a
+                  href='https://bima.kemdiktisaintek.go.id/'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-xs font-medium transition text-white hover:text-white/80 px-1.5 py-0.5'
+                >
+                  BIMA
+                </a>
+                <span className='text-white/40 text-xs ml-1'>•</span>
+                <a
+                  href='https://www.instagram.com/dppmupi_untukindonesia/'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-white/80 hover:text-white transition-colors p-1'
+                  aria-label='Instagram'
+                >
+                  <FaInstagram className='w-3 h-3' />
+                </a>
+                <a
+                  href='https://www.youtube.com/@lppmupi3369'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-white/80 hover:text-white transition-colors p-1'
+                  aria-label='YouTube'
+                >
+                  <FaYoutube className='w-3 h-3' />
+                </a>
+              </div>
+            </div>
+
+            <div className='hidden md:flex flex-wrap justify-end gap-4'>
               <a
                 href='https://sinta.kemdiktisaintek.go.id/affiliations/profile/414'
                 target='_blank'
@@ -130,7 +189,6 @@ export default function Navbar() {
                 BIMA
               </a>
 
-              {/* Social Media Links */}
               <div className='flex items-center gap-3 ml-4'>
                 <a
                   href='https://www.instagram.com/dppmupi_untukindonesia/'
