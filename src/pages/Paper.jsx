@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import FindPaper from "../components/paper/FindPaper";
+import { fetchCollections } from "../utils/api";
 
 // Komponen Section Sidebar
 function SidebarSection({ title, items }) {
@@ -65,32 +66,88 @@ const sidebarData = {
   sjr: [
     { name: "Q-None", count: 18855 },
     { name: "Q1", count: 3381 },
-    { name: "Q2", count: 2222 },
     { name: "Q3", count: 1739 },
     { name: "Q4", count: 1120 },
   ],
 };
 
-// Dummy Paper List (agar bisa di-sort)
-const dummyPapers = Array.from({ length: 6 }).map((_, idx) => ({
-  title: `Lorem ipsum dolor sit amet, consectetur adipiscing elit ${idx + 1}`,
-  link: `https://doi.org/10.xxxx/lorem-${idx + 1}`,
-  authors: "Lorem Ipsum, Dolor Sit",
-  organization: "Consectetur Institute",
-  year: 2020 + idx,
-  cite: Math.floor(Math.random() * 100),
-}));
+// Format collection data for display
+const formatCollectionData = (collections) => {
+  return collections.map(collection => ({
+    id: collection.uuid,
+    title: collection.name,
+    link: `/collections/${collection.uuid}`,
+    authors: collection.metadata?.['dc.contributor.author']?.[0]?.value || 'No author',
+    organization: collection.metadata?.['dc.publisher']?.[0]?.value || 'No organization',
+    year: collection.metadata?.['dc.date.issued']?.[0]?.value?.substring(0, 4) || 'N/A',
+    description: collection.metadata?.['dc.description.abstract']?.[0]?.value || 'No description available',
+    itemCount: collection.numberItems || 0
+  }));
+};
 
 export default function Paper() {
-  const [sortAsc, setSortAsc] = useState(true);
+  // Collections state
+  const [collections, setCollections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch collections on component mount
+  useEffect(() => {
+    const getCollections = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchCollections();
+        setCollections(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to fetch collections:', err);
+        setError('Failed to load collections. ' + 
+          (err.response?.data?.message || 'Please check your connection and try again.'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getCollections();
+  }, []);
 
   // Filter & Sort
+  const [sortAsc, setSortAsc] = useState(true);
+
+  const [papers, setPapers] = useState([]);
+  const [papersLoading, setPapersLoading] = useState(true);
+  const [papersError, setPapersError] = useState(null);
+
+  // Fetch papers when collections are loaded
+  useEffect(() => {
+    const fetchPapers = async () => {
+      if (collections.length > 0) {
+        try {
+          setPapersLoading(true);
+          // For now, we'll use the collections data as papers
+          // In a real app, you might want to fetch actual items from the collections
+          const formattedPapers = formatCollectionData(collections);
+          setPapers(formattedPapers);
+          setPapersError(null);
+        } catch (err) {
+          console.error('Failed to fetch papers:', err);
+          setPapersError('Failed to load papers. Please try again later.');
+        } finally {
+          setPapersLoading(false);
+        }
+      }
+    };
+
+    fetchPapers();
+  }, [collections]);
+
   const sortedPapers = useMemo(() => {
-    const data = [...dummyPapers]; // copy array
-    return data.sort((a, b) =>
-      sortAsc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
+    return [...papers].sort((a, b) => 
+      sortAsc 
+        ? a.title.localeCompare(b.title)
+        : b.title.localeCompare(a.title)
     );
-  }, [sortAsc]);
+  }, [papers, sortAsc]);
 
   return (
     <section className="bg-gray-50 min-h-screen">
@@ -120,6 +177,13 @@ export default function Paper() {
             items={sidebarData.sdg}
           />
           <SidebarSection title="Concepts" items={sidebarData.concepts} />
+          <SidebarSection 
+            title="Collections" 
+            items={collections.map(collection => ({
+              name: collection.name,
+              count: collection.numberItems || 0
+            }))} 
+          />
           <SidebarSection title="Profile" items={sidebarData.profile} />
           <SidebarSection title="Type" items={sidebarData.type} />
           <SidebarSection title="SJR" items={sidebarData.sjr} />
@@ -130,9 +194,20 @@ export default function Paper() {
         {/* Results */}
         <main className="flex-1">
           {/* Summary row */}
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+          {loading && (
+            <div className="text-center py-4">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <p className="mt-2 text-sm text-gray-600">Loading collections...</p>
+            </div>
+          )}
           <div className="flex items-center justify-between border-b pb-3 mb-6">
             <p className="text-sm text-gray-600">
-              1 - {sortedPapers.length} out of {dummyPapers.length} results
+              Showing {sortedPapers.length} {sortedPapers.length === 1 ? 'result' : 'results'}
             </p>
             <div className="flex items-center gap-5 text-sm">
               <button
@@ -145,28 +220,55 @@ export default function Paper() {
           </div>
 
           {/* List */}
-          <div className="space-y-6">
-            {sortedPapers.map((paper, idx) => (
-              <article key={idx} className="border-b pb-4">
-                <h2 className="font-semibold text-lg text-gray-900">{paper.title}</h2>
-                <a
-                  href={paper.link}
-                  className="text-sm text-blue-600 break-words block"
-                >
-                  {paper.link}
-                </a>
-                <p className="text-sm text-gray-600">Authors: {paper.authors}</p>
-                <p className="text-sm text-gray-600">Organization: {paper.organization}</p>
-                <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
-                  <span>Journal</span>
-                  <span>|</span>
-                  <span>Cite {paper.cite}</span>
-                  <span>|</span>
-                  <span>Year {paper.year}</span>
-                </div>
-              </article>
-            ))}
-          </div>
+          {papersLoading ? (
+            <div className="text-center py-10">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <p className="mt-2 text-sm text-gray-600">Loading papers...</p>
+            </div>
+          ) : papersError ? (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {papersError}
+            </div>
+          ) : sortedPapers.length === 0 ? (
+            <div className="text-center py-10 text-gray-500">
+              No papers found in this collection.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {sortedPapers.map((paper) => (
+                <article key={paper.id} className="border-b pb-4">
+                  <h2 className="font-semibold text-lg text-gray-900">
+                    <a 
+                      href={paper.link}
+                      className="hover:text-blue-600 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {paper.title}
+                    </a>
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    <span className="font-medium">Authors:</span> {paper.authors}
+                  </p>
+                  {paper.organization && (
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Organization:</span> {paper.organization}
+                    </p>
+                  )}
+                  {paper.description && (
+                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                      {paper.description}
+                    </p>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
+                    <span>{paper.itemCount} items</span>
+                    <span>•</span>
+                    <span>Year: {paper.year}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </main>
       </div>
     </section>

@@ -1,24 +1,66 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import FindOrganization from "../components/organization/FindOrganization";
-
-const dummyOrganizations = Array.from({ length: 20 }).map((_, i) => ({
-  id: i + 1,
-  title: `Placehoder organization`,
-  desc: `Placeholder description ${i + 1}`,
-}));
+import { fetchCommunities } from "../utils/api";
 
 export default function Organization() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [sortAsc, setSortAsc] = useState(false);
+  const [organizations, setOrganizations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 20,
+    totalPages: 1,
+    totalElements: 0
+  });
+
+  // Fetch organizations from the API
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        setLoading(true);
+        const communities = await fetchCommunities({
+          page: pagination.page,
+          size: pagination.size
+        });
+        
+        setOrganizations(communities || []);
+      } catch (err) {
+        console.error('Error fetching organizations:', err);
+        setError('Failed to load organizations. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrganizations();
+  }, [pagination.page, pagination.size]);
 
   const filtered = useMemo(() => {
-    const list = dummyOrganizations.filter((p) =>
-      p.title.toLowerCase().includes(query.toLowerCase())
-    );
+    let list = organizations.map(org => ({
+      id: org.id || org.uuid,
+      title: org.name,
+      desc: org.metadata?.['dc.description.abstract']?.[0]?.value || 'No description available',
+      itemCount: org.numberItems || 0
+    }));
+
+    if (query) {
+      const searchTerm = query.toLowerCase();
+      list = list.filter(org =>
+        org.title?.toLowerCase().includes(searchTerm) ||
+        org.desc?.toLowerCase().includes(searchTerm)
+      );
+    }
+
     return list.sort((a, b) =>
-      sortAsc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
+      sortAsc 
+        ? (a.title || '').localeCompare(b.title || '') 
+        : (b.title || '').localeCompare(a.title || '')
     );
-  }, [query, sortAsc]);
+  }, [organizations, query, sortAsc]);
 
   return (
     <div className='bg-[#FFFFFF] min-h-screen'>
@@ -134,17 +176,48 @@ export default function Organization() {
             </div>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className='text-center py-10'>
+              <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
+              <p className='mt-2 text-sm text-gray-600'>Loading organizations...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4'>
+              {error}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && filtered.length === 0 && (
+            <div className='text-center py-10 text-gray-500'>
+              No organizations found. Try adjusting your search.
+            </div>
+          )}
+
           {/* List */}
-          <div className='space-y-6'>
-            {filtered.map((item) => (
-              <article key={item.id} className='border-b pb-4'>
-                <h2 className='font-semibold text-lg text-gray-900'>
-                  {item.title}
-                </h2>
-                <p className='text-gray-600 text-sm'>{item.desc}</p>
-              </article>
-            ))}
-          </div>
+          {!loading && !error && filtered.length > 0 && (
+            <div className='space-y-6'>
+              {filtered.map((item) => (
+                <article 
+                  key={item.id} 
+                  className='border-b pb-4 cursor-pointer hover:bg-gray-50 p-4 rounded-md transition-colors'
+                  onClick={() => navigate(`/communities/${item.id}`)}
+                >
+                  <h2 className='font-semibold text-lg text-gray-900 hover:text-blue-600 transition-colors'>
+                    {item.title}
+                  </h2>
+                  <p className='text-gray-600 text-sm line-clamp-2'>{item.desc}</p>
+                  <div className='mt-2 text-sm text-gray-500'>
+                    {item.itemCount} items • Click to view details
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </main>
       </div>
     </div>
