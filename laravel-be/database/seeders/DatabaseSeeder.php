@@ -16,6 +16,10 @@ class DatabaseSeeder extends Seeder
             OrganizationSeeder::class,
             SdgSeeder::class,
         ]);
-        // User::factory(10)->create();
+
+        // Seed papers data
+        $this->call([
+            PaperSeeder::class,
+        ]);
     }
 }
