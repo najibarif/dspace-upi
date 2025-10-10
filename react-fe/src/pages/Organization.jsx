@@ -197,7 +197,6 @@ export default function Organization() {
               No organizations found. Try adjusting your search.
             </div>
           )}
-
           {/* List */}
           {!loading && !error && filtered.length > 0 && (
             <div className='space-y-6'>
@@ -205,7 +204,7 @@ export default function Organization() {
                 <article 
                   key={item.id} 
                   className='border-b pb-4 cursor-pointer hover:bg-gray-50 p-4 rounded-md transition-colors'
-                  onClick={() => navigate(`/communities/${item.id}`)}
+                  onClick={() => navigate(`/organization/${item.id}`)}
                 >
                   <h2 className='font-semibold text-lg text-gray-900 hover:text-blue-600 transition-colors'>
                     {item.title}

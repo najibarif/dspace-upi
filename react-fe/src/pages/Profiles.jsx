@@ -1,26 +1,97 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { getEpersons, login } from "../utils/api";
 import FindProfiles from "../components/profiles/FindProfiles";
 
-const dummyProfiles = Array.from({ length: 24 }).map((_, i) => ({
-  id: i + 1,
-  name: `Placeholder Name ${i + 1}`,
-  faculty: "Faculty Name",
-  department: "Department Name",
-  startYear: "20xx",
-  endYear: "20xx",
-}));
+// Kredensial login - ganti dengan kredensial yang valid
+const DSpaceCredentials = {
+  email: "naufalnajibarif@upi.edu", // Ganti dengan email admin DSpace
+  password: "dspace123"            // Ganti dengan password admin DSpace
+};
 
 export default function Profiles() {
   const [query, setQuery] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch profiles from API with authentication
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        try {
+          // Coba ambil data epersons
+          const response = await getEpersons();
+          console.log('API Response:', response);
+          
+          // Pastikan data yang diterima adalah array
+          const profilesData = Array.isArray(response) 
+            ? response 
+            : (response._embedded?.epersons || []);
+            
+          setProfiles(profilesData);
+        } catch (error) {
+          if (error.response && error.response.status === 401) {
+            // Jika tidak terautentikasi, coba login dulu
+            console.log('Not authenticated, trying to login...');
+            try {
+              await login(DSpaceCredentials.email, DSpaceCredentials.password);
+              console.log('Login successful, retrying to fetch profiles...');
+              
+              // Coba ambil data lagi setelah login
+              const retryResponse = await getEpersons();
+              const profilesData = Array.isArray(retryResponse) 
+                ? retryResponse 
+                : (retryResponse._embedded?.epersons || []);
+                
+              setProfiles(profilesData);
+            } catch (loginError) {
+              console.error('Login failed:', loginError);
+              setError('Gagal login ke sistem. Silakan periksa kredensial admin.');
+            }
+          } else {
+            throw error;
+          }
+        }
+      } catch (err) {
+        console.error('Error in fetchProfiles:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status,
+        });
+        setError('Gagal memuat data profil. ' + (err.response?.data?.message || ''));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfiles();
+  }, []);
 
   const filtered = useMemo(() => {
-    const list = dummyProfiles.filter((p) =>
-      p.name.toLowerCase().includes(query.toLowerCase())
+    // Format data dari API ke format yang diharapkan komponen
+    const formattedProfiles = profiles.map(profile => ({
+      id: profile.uuid || profile.id,
+      name: profile.name || 'Nama tidak tersedia',
+      email: profile.email || 'Email tidak tersedia',
+      faculty: profile.metadata?.['eperson.faculty']?.[0]?.value || 'Fakultas tidak tersedia',
+      department: profile.metadata?.['eperson.department']?.[0]?.value || 'Departemen tidak tersedia',
+      startYear: profile.metadata?.['eperson.startYear']?.[0]?.value || 'Tahun tidak tersedia',
+      endYear: profile.metadata?.['eperson.endYear']?.[0]?.value || 'Tahun tidak tersedia',
+    }));
+
+    const list = formattedProfiles.filter(profile => 
+      Object.values(profile).some(value => 
+        String(value).toLowerCase().includes(query.toLowerCase())
+      )
     );
-    return list.sort((a, b) =>
-      sortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
-    );
+
+    return sortAsc 
+      ? [...list].sort((a, b) => a.name.localeCompare(b.name))
+      : [...list].sort((a, b) => b.name.localeCompare(a.name));
   }, [query, sortAsc]);
 
   return (
