@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React from "react";
+import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import BackToTop from "./components/BackToTop";
@@ -11,9 +11,6 @@ import Project from "./pages/Project";
 import Outreach from "./pages/Outreach";
 import Thesis from "./pages/Thesis";
 import Equipments from "./pages/Equipments";
-import Profiles from "./pages/Profiles";
-import Organization from "./pages/Organization";
-import CommunityDetail from './pages/CommunityDetail';
 
 export default function App() {
   return (
@@ -28,9 +25,6 @@ export default function App() {
         <Route path='/outreach' element={<Outreach />} />
         <Route path='/thesis' element={<Thesis />} />
         <Route path='/equipment' element={<Equipments />} />
-        <Route path='/profiles' element={<Profiles />} />
-        <Route path='/organization' element={<Organization />} />
-        <Route path='/organization/:id' element={<CommunityDetail />} />
       </Routes>
 
       <Footer />
