@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Axios instance untuk Laravel API (via Vite proxy -> http://localhost:8000)
 const api = axios.create({
   baseURL: '/api',
   headers: {
@@ -10,7 +9,6 @@ const api = axios.create({
   timeout: 30000
 });
 
-// Request interceptor
 api.interceptors.request.use(
   (config) => config,
   (error) => {
@@ -18,7 +16,6 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -28,17 +25,15 @@ api.interceptors.response.use(
   }
 );
 
-// ========== Papers (Laravel) ==========
 const getPapers = async (params = {}) => {
   const response = await api.get('/papers', { params });
-  // Dukung bentuk: { success, message, data: { data: [...] } } atau { data: [...] } atau [...]
   const payload = response.data?.data ?? response.data;
   return payload;
 };
 
 const getPaperById = async (id) => {
   const response = await api.get(`/papers/${id}`);
-  return response.data;
+      return response.data;
 };
 
 const createPaper = async (payload) => {
@@ -48,7 +43,7 @@ const createPaper = async (payload) => {
 
 const updatePaper = async (id, payload) => {
   const response = await api.put(`/papers/${id}`, payload);
-  return response.data;
+    return response.data;
 };
 
 const deletePaper = async (id) => {
@@ -58,7 +53,7 @@ const deletePaper = async (id) => {
 
 const getPaperStatistics = async () => {
   const response = await api.get('/papers/statistics/overview');
-  return response.data;
+    return response.data;
 };
 
 const bulkDeletePapers = async (ids) => {
@@ -66,7 +61,6 @@ const bulkDeletePapers = async (ids) => {
   return response.data;
 };
 
-// Ekspor fungsi Laravel Papers
 export {
   getPapers,
   getPaperById,

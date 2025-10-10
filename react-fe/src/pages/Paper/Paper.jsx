@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import FindPaper from "../components/paper/FindPaper";
-import { getPapers } from "../utils/api";
+import { Link } from "react-router-dom";
+import FindPaper from "../../components/paper/FindPaper";
+import { getPapers } from "../../utils/api";
 
-// Komponen Section Sidebar
 function SidebarSection({ title, items }) {
   const [showAll, setShowAll] = useState(false);
   const visibleItems = showAll ? items : items.slice(0, 5);
@@ -33,7 +33,6 @@ function SidebarSection({ title, items }) {
   );
 }
 
-// Dummy Data Sidebar
 const sidebarData = {
   sdg: [
     { name: "GOAL 7: Affordable and Clean Energy", count: 2054 },
@@ -71,35 +70,33 @@ const sidebarData = {
   ],
 };
 
-// Adapt data dari Laravel Papers API
 const adaptPapers = (apiData) => {
-  // Ekspektasi Laravel resource collection: { data: [...], meta/pagination }
+  // Struktur Laravel: { data: [...], meta: {...}, links: {...} }
   const items = Array.isArray(apiData?.data)
     ? apiData.data
     : Array.isArray(apiData)
     ? apiData
     : [];
   return items.map((paper) => ({
-    id: paper.id ?? paper.uuid ?? paper._id,
-    title: paper.title ?? paper.name ?? "Untitled",
-    link: paper.url ?? `#/papers/${paper.id}`,
+    id: paper.paper_id ?? paper.id,
+    title: paper.title ?? "Untitled",
+    link: paper.url_fulltext ?? `#/papers/${paper.paper_id ?? paper.id}`,
     authors: paper.authors?.join(", ") ?? paper.author ?? "-",
-    organization: paper.organization ?? paper.publisher ?? "-",
-    year:
-      (paper.year ?? paper.published_at ?? "").toString().substring(0, 4) ||
-      "N/A",
-    description: paper.abstract ?? paper.description ?? "",
-    itemCount: paper.itemCount ?? 1,
+    organization: paper.organization ?? "-",
+    source: paper.venue_name ?? "-",
+    year: paper.year?.toString() || "N/A",
+    description: paper.abstract ?? "",
+    itemCount: 1,
+    type: paper.type_label ?? paper.type,
+    visibility: paper.visibility_label ?? paper.visibility,
   }));
 };
 
 export default function Paper() {
-  // Papers state
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch papers on mount
   useEffect(() => {
     const fetchAll = async () => {
       try {
@@ -121,7 +118,6 @@ export default function Paper() {
     fetchAll();
   }, []);
 
-  // Filter & Sort
   const [sortAsc, setSortAsc] = useState(true);
 
   const sortedPapers = useMemo(() => {
@@ -135,11 +131,9 @@ export default function Paper() {
       <FindPaper />
 
       <div className='max-w-7xl mx-auto px-6 md:px-12 py-10 flex gap-8'>
-        {/* Sidebar Filter */}
         <aside className='w-64 hidden md:block bg-white shadow-sm rounded-md p-4 h-fit'>
           <h2 className='font-semibold mb-4'>Filters for Paper</h2>
 
-          {/* Sort */}
           <div className='mb-4'>
             <h4 className='font-medium text-sm mb-2'>Sort By</h4>
             <select
@@ -152,7 +146,6 @@ export default function Paper() {
             </select>
           </div>
 
-          {/* Sidebar Sections */}
           <SidebarSection
             title='Sustainable Development Goals'
             items={sidebarData.sdg}
@@ -163,9 +156,7 @@ export default function Paper() {
           <SidebarSection title='SJR' items={sidebarData.sjr} />
         </aside>
 
-        {/* Results */}
         <main className='flex-1'>
-          {/* Summary row */}
           {error && (
             <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4'>
               {error}
@@ -192,7 +183,6 @@ export default function Paper() {
             </div>
           </div>
 
-          {/* List */}
           {loading ? (
             <div className='text-center py-10'>
               <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
@@ -211,30 +201,30 @@ export default function Paper() {
               {sortedPapers.map((paper) => (
                 <article key={paper.id} className='border-b pb-4'>
                   <h2 className='font-semibold text-lg text-gray-900'>
-                    <a
-                      href={paper.link}
+                    <Link
+                      to={`/paper/${paper.id}`}
                       className='hover:text-blue-600 transition-colors'
-                      target='_blank'
-                      rel='noopener noreferrer'
                     >
                       {paper.title}
-                    </a>
+                    </Link>
                   </h2>
-                  <p className='text-sm text-gray-600 mt-1'>
-                    <span className='font-medium'>Authors:</span>{" "}
-                    {paper.authors}
-                  </p>
-                  {paper.organization && (
-                    <p className='text-sm text-gray-600'>
-                      <span className='font-medium'>Organization:</span>{" "}
-                      {paper.organization}
-                    </p>
-                  )}
                   {paper.description && (
                     <p className='text-sm text-gray-600 mt-2 line-clamp-2'>
                       {paper.description}
                     </p>
                   )}
+                  <p className='text-sm text-gray-600 mt-1'>
+                    <span className='font-medium'>Source:</span>{" "}
+                    {paper.source || "N/A"}
+                  </p>
+                  <p className='text-sm text-gray-600'>
+                    <span className='font-medium'>Authors:</span>{" "}
+                    {paper.authors}
+                  </p>
+                  <p className='text-sm text-gray-600'>
+                    <span className='font-medium'>Organization:</span>{" "}
+                    {paper.organization || "N/A"}
+                  </p>
                   <div className='mt-2 flex flex-wrap gap-3 text-xs text-gray-500'>
                     <span>{paper.itemCount} items</span>
                     <span>•</span>
