@@ -20,6 +20,7 @@ function SidebarSection({ title, items, onToggle, isChecked }) {
                 type='checkbox'
                 checked={checked}
                 onChange={() => onToggle && onToggle(value)}
+                className='rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]'
               />
               <span className='flex-1'>{item.name}</span>
               {item.count && (
@@ -32,9 +33,23 @@ function SidebarSection({ title, items, onToggle, isChecked }) {
       {items.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className='text-[#d52727] hover:text-[#b31f1f] text-sm mt-2 transition-colors'
+          className='text-[#d52727] hover:text-[#b31f1f] text-sm mt-2 transition-colors flex items-center'
         >
-          {showAll ? "Show less" : "See more >"}
+          {showAll ? (
+            <>
+              <span className='material-symbols-outlined text-base mr-1'>
+                expand_less
+              </span>
+              Show less
+            </>
+          ) : (
+            <>
+              <span className='material-symbols-outlined text-base mr-1'>
+                expand_more
+              </span>
+              See more
+            </>
+          )}
         </button>
       )}
     </div>
@@ -192,6 +207,7 @@ const adaptPapers = (openAlexData) => {
 };
 
 export default function Paper() {
+  // State management
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -352,16 +368,40 @@ export default function Paper() {
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }, [meta.total_pages, meta.page]);
 
+  // Toggle mobile filters
+  const toggleMobileFilters = () => {
+    setShowMobileFilters(!showMobileFilters);
+  };
+
+  // Handle year filter changes
+  const handleYearChange = (type, value) => {
+    if (type === 'from') setYearFrom(value);
+    else setYearTo(value);
+  };
+
+  // Apply filters
+  const applyFilters = () => {
+    applyFiltersToUrl(selectedTypes, yearFrom, yearTo, true);
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setYearFrom("");
+    setYearTo("");
+    setSelectedTypes([]);
+    applyFiltersToUrl([], "", "", true);
+  };
+
   return (
-    <section className='bg-white min-h-screen'>
+    <section className='bg-gray-50 min-h-screen'>
       <FindPaper />
 
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-10'>
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
         {/* Mobile filter button */}
         <div className='md:hidden mb-4'>
           <button
-            onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className='flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
+            onClick={toggleMobileFilters}
+            className='flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors w-full justify-center'
           >
             <span className='material-symbols-outlined text-lg'>filter_alt</span>
             {showMobileFilters ? 'Hide Filters' : 'Show Filters'}
@@ -391,16 +431,6 @@ export default function Paper() {
           />
           <SidebarSection title='Concepts' items={sidebarData.concepts} />
           <SidebarSection title='Profile' items={sidebarData.profile} />
-<<<<<<< HEAD
-          <SidebarSection title='Type' items={sidebarData.type} />
-          <SidebarSection title='SJR' items={sidebarData.sjr} />
-          </aside>
-
-          <main className='flex-1'>
-          <div className='flex flex-col xs:flex-row items-start xs:items-center justify-between border-b pb-3 mb-6 gap-3'>
-            <p className='text-sm text-gray-600 whitespace-nowrap'>
-              {sortedPapers.length} {sortedPapers.length === 1 ? "result" : "results"}
-=======
           <SidebarSection
             title='Type'
             items={sidebarData.type}
@@ -452,12 +482,10 @@ export default function Paper() {
             </div>
           </div>
         </aside>
-
         <main className='flex-1'>
           <div className='flex items-center justify-between border-b pb-3 mb-6'>
             <p className='text-sm text-gray-600'>
               Showing {sortedPapers.length} of {meta.count} results
->>>>>>> 3e76a1e37b670e7a54024bb792571173326ae325
             </p>
             <button
               className='text-sm text-[#d52727] hover:text-[#b31f1f] flex items-center gap-1 transition-colors'
@@ -472,80 +500,168 @@ export default function Paper() {
 
           {loading ? (
             <div className='text-center py-10'>
-              <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
+              <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#d52727]'></div>
               <p className='mt-2 text-sm text-gray-600'>Loading papers...</p>
             </div>
           ) : error ? (
-            <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4'>
-              {error}
+            <div className='bg-red-50 border-l-4 border-red-500 p-4 mb-6'>
+              <div className='flex'>
+                <div className='flex-shrink-0'>
+                  <span className='material-symbols-outlined text-red-500'>error</span>
+                </div>
+                <div className='ml-3'>
+                  <p className='text-sm text-red-700'>{error}</p>
+                </div>
+              </div>
             </div>
           ) : sortedPapers.length === 0 ? (
-            <div className='text-center py-10 text-gray-500'>
-              No papers found in this collection.
+            <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center'>
+              <span className='material-symbols-outlined text-gray-400 text-4xl mb-2'>
+                search_off
+              </span>
+              <h3 className='text-lg font-medium text-gray-900 mb-1'>No papers found</h3>
+              <p className='text-gray-500 text-sm'>
+                Try adjusting your search or filter criteria
+              </p>
+              <button
+                onClick={clearFilters}
+                className='mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#d52727] hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
+              >
+                Clear all filters
+              </button>
             </div>
           ) : (
-            <div className='space-y-6'>
+            <div className='space-y-4'>
               {sortedPapers.map((paper) => (
-                <article key={paper.id} className='border-b pb-4 hover:bg-gray-50 transition-colors duration-150 p-3 rounded-md -mx-3'>
-                  <h2 className='font-semibold text-base sm:text-lg text-gray-900'>
-                    <Link
-                      to={`/paper/${paper.id}`}
-                      className='hover:text-[#d52727] transition-colors'
-                    >
-                      {paper.title}
-                    </Link>
-                  </h2>
-                  {paper.description && (
-                    <p className='text-sm text-gray-600 mt-2 line-clamp-2'>
-                      {paper.description}
-                    </p>
-                  )}
-                  <p className='text-sm text-gray-600 mt-1'>
-                    <span className='font-medium'>Source:</span>{" "}
-                    {paper.source || "N/A"}
-                  </p>
-                  <p className='text-sm text-gray-600'>
-                    <span className='font-medium'>Authors:</span>{" "}
-                    {paper.authors}
-                  </p>
-                  <p className='text-sm text-gray-600'>
-                    <span className='font-medium'>Organization:</span>{" "}
-                    {paper.organization || "N/A"}
-                  </p>
-                  <div className='mt-2 flex flex-wrap gap-3 text-xs text-gray-500'>
-                    <span>{paper.itemCount} items</span>
-                    <span>•</span>
-                    <span>Year: {paper.year}</span>
+                <article 
+                  key={paper.id} 
+                  className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200'
+                >
+                  <div className='p-4 sm:p-6'>
+                    <div className='flex items-start justify-between'>
+                      <div className='flex-1 min-w-0'>
+                        <h2 className='text-base sm:text-lg font-semibold text-gray-900 mb-1 leading-tight'>
+                          <Link
+                            to={`/paper/${paper.id}`}
+                            className='hover:text-[#d52727] transition-colors'
+                          >
+                            {paper.title}
+                          </Link>
+                        </h2>
+                        
+                        <div className='mt-1 flex items-center text-xs text-gray-500'>
+                          <span className='flex items-center'>
+                            <span className='material-symbols-outlined text-sm mr-1'>person</span>
+                            {paper.authors || 'Unknown author'}
+                          </span>
+                          <span className='mx-2'>•</span>
+                          <span>{paper.year || 'N/A'}</span>
+                        </div>
+
+                        {paper.source && (
+                          <p className='mt-2 text-sm text-gray-600 line-clamp-2'>
+                            <span className='font-medium'>Published in:</span> {paper.source}
+                          </p>
+                        )}
+
+                        {paper.organization && (
+                          <p className='mt-1 text-sm text-gray-600 line-clamp-1'>
+                            <span className='font-medium'>Affiliation:</span> {paper.organization}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className='ml-4 flex-shrink-0'>
+                        <Link
+                          to={`/paper/${paper.id}`}
+                          className='inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-[#d52727] bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
+                        >
+                          View Details
+                        </Link>
+                      </div>
+                    </div>
+
+                    {paper.description && (
+                      <p className='mt-3 text-sm text-gray-600 line-clamp-3'>
+                        {paper.description}
+                      </p>
+                    )}
+
+                    <div className='mt-3 flex flex-wrap gap-2'>
+                      {paper.type && (
+                        <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+                          {paper.type}
+                        </span>
+                      )}
+                      {paper.visibility && (
+                        <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+                          {paper.visibility}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </article>
               ))}
+
+              {/* Pagination */}
               {meta.total_pages > 1 && (
-                <div className='flex items-center justify-center gap-2 pt-4'>
-                  <button
-                    className='px-3 py-1 border rounded disabled:opacity-50'
-                    onClick={() => goToPage(meta.page - 1)}
-                    disabled={meta.page <= 1}
-                  >
-                    Prev
-                  </button>
-                  {pageNumbers.map((p) => (
+                <div className='mt-8 flex flex-col sm:flex-row items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4'>
+                  <div className='mb-4 sm:mb-0'>
+                    <p className='text-sm text-gray-700'>
+                      Showing page <span className='font-medium'>{meta.page}</span> of{' '}
+                      <span className='font-medium'>{meta.total_pages}</span>
+                    </p>
+                  </div>
+                  <nav className='flex items-center space-x-2'>
                     <button
-                      key={p}
-                      className={`px-3 py-1 border rounded ${
-                        p === meta.page ? "bg-gray-900 text-white" : ""
+                      onClick={() => goToPage(meta.page - 1)}
+                      disabled={meta.page <= 1}
+                      className={`relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 text-sm font-medium ${
+                        meta.page <= 1 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
                       }`}
-                      onClick={() => goToPage(p)}
                     >
-                      {p}
+                      <span className='material-symbols-outlined text-base'>
+                        chevron_left
+                      </span>
+                      Previous
                     </button>
-                  ))}
-                  <button
-                    className='px-3 py-1 border rounded disabled:opacity-50'
-                    onClick={() => goToPage(meta.page + 1)}
-                    disabled={meta.page >= meta.total_pages}
-                  >
-                    Next
-                  </button>
+                    
+                    <div className='hidden sm:flex space-x-1'>
+                      {pageNumbers.map((pageNum) => {
+                        const isCurrent = pageNum === meta.page;
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => goToPage(pageNum)}
+                            className={`relative inline-flex items-center px-3 py-1.5 border text-sm font-medium ${
+                              isCurrent
+                                ? 'z-10 bg-[#d52727] border-[#d52727] text-white'
+                                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    <button
+                      onClick={() => goToPage(meta.page + 1)}
+                      disabled={meta.page >= meta.total_pages}
+                      className={`relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 text-sm font-medium ${
+                        meta.page >= meta.total_pages
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      Next
+                      <span className='material-symbols-outlined text-base ml-1'>
+                        chevron_right
+                      </span>
+                    </button>
+                  </nav>
                 </div>
               )}
             </div>
