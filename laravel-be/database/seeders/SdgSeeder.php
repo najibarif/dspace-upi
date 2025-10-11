@@ -34,13 +34,16 @@ class SdgSeeder extends Seeder
         ];
 
         foreach ($sdgs as [$number, $title]) {
+            // Generate icon URL based on storage path
+            $iconUrl = "storage/sdgs/E-WEB-Goal-" . str_pad($number, 2, '0', STR_PAD_LEFT) . " 1.png";
+            
             Sdg::updateOrCreate(
                 ['number' => $number],
                 [
                     'sdg_id' => Str::uuid(),
                     'title' => $title,
                     'description' => null,
-                    'icon_url' => null,
+                    'icon_url' => $iconUrl,
                 ]
             );
         }
