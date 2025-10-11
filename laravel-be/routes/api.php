@@ -1,11 +1,23 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\SdgController;
 use App\Http\Controllers\PaperController;
 use Illuminate\Http\Request;
 
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+});
+// Public user routes (available at /api/users)
+Route::get('/users', [UserController::class, 'index']);
+Route::get('/users/{id}', [UserController::class, 'show']);
+Route::post('/users', [UserController::class, 'store']);
+Route::put('/users/{id}', [UserController::class, 'update']);
+Route::delete('/users/{id}', [UserController::class, 'destroy']);
 Route::prefix('organizations')->group(function () {
     Route::get('/', [OrganizationController::class, 'index']);      // GET semua data
     Route::get('/{id}', [OrganizationController::class, 'show']);   // GET detail by id
