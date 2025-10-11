@@ -7,6 +7,7 @@ import { FaBars, FaInstagram, FaYoutube } from "react-icons/fa";
 
 const navItems = [
   { label: "Home", href: "/" },
+  { label: "Profiles", href: "/profiles" },
   { label: "Paper", href: "/paper" },
   { label: "Project", href: "/project" },
   { label: "Patent", href: "/patent" },

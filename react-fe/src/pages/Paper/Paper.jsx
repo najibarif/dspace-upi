@@ -71,7 +71,6 @@ const sidebarData = {
 };
 
 const adaptPapers = (apiData) => {
-  // Struktur Laravel: { data: [...], meta: {...}, links: {...} }
   const items = Array.isArray(apiData?.data)
     ? apiData.data
     : Array.isArray(apiData)
@@ -157,17 +156,6 @@ export default function Paper() {
         </aside>
 
         <main className='flex-1'>
-          {error && (
-            <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4'>
-              {error}
-            </div>
-          )}
-          {loading && (
-            <div className='text-center py-4'>
-              <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
-              <p className='mt-2 text-sm text-gray-600'>Loading papers...</p>
-            </div>
-          )}
           <div className='flex items-center justify-between border-b pb-3 mb-6'>
             <p className='text-sm text-gray-600'>
               Showing {sortedPapers.length}{" "}

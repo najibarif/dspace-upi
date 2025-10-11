@@ -8,10 +8,12 @@ import Home from "./pages/Home";
 import Paper from "./pages/Paper/Paper";
 import PaperDetail from "./pages/Paper/PaperDetail";
 import Project from "./pages/Project";
+import Patent from "./pages/Patent";
 import Outreach from "./pages/Outreach";
 import Thesis from "./pages/Thesis";
 import Equipments from "./pages/Equipments";
 import Organization from "./pages/Organization";
+import Profiles from "./pages/Profiles";
 
 export default function App() {
   return (
@@ -23,11 +25,13 @@ export default function App() {
         <Route path='/paper' element={<Paper />} />
         <Route path='/paper/:id' element={<PaperDetail />} />
         <Route path='/project' element={<Project />} />
+        <Route path='/patent' element={<Patent />} />
         <Route path='/outreach' element={<Outreach />} />
         <Route path='/thesis' element={<Thesis />} />
         <Route path='/equipment' element={<Equipments />} />
         <Route path='/organization' element={<Organization />} />
         <Route path='/organization/:id' element={<Organization />} />
+        <Route path='/profiles' element={<Profiles />} />
       </Routes>
 
       <Footer />
