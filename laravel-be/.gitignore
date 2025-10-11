@@ -2,14 +2,14 @@
 /node_modules
 /public/build
 /public/hot
-/public/storage
+# /public/storage
 /storage/*.key
 /storage/pail
 /vendor
 .env
 .env.backup
 .env.production
-.phpactor.json
+.phpactor.jsony
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
