@@ -9,12 +9,10 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      // Proxy FE -> Laravel API
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-        // Tidak perlu rewrite; Laravel sudah di bawah /api
       }
     },
     cors: {
@@ -24,16 +22,13 @@ export default defineConfig({
       allowedHeaders: 'X-Requested-With, Content-Type, Authorization, X-XSRF-TOKEN'
     }
   },
-  // Enable source maps for better debugging
   build: {
     sourcemap: true,
   },
-  // Development server settings
   preview: {
     port: 5173,
     strictPort: true,
   },
-  // Environment variables
   define: {
     'process.env': {}
   }
