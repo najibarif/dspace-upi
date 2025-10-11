@@ -17,7 +17,7 @@ import Profile from "./pages/Profile";
 
 export default function App() {
   return (
-    <div className='font-sans bg-gray-100 pt-[64px] md:pt-[80px]'>
+    <div className='font-sans bg-white pt-[64px] md:pt-[80px]'>
       <Navbar />
 
       <Routes>

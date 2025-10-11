@@ -1,15 +1,110 @@
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import FindOrganization from "../components/organization/FindOrganization";
-import { getOrganizations } from "../utils/api";
+import { getOrganizations } from '../utils/api';
+import FindOrganization from '../components/organization/FindOrganization';
+
+const sidebarData = {
+  sdg: [
+    { name: "GOAL 7: Affordable and Clean Energy", count: 2054 },
+    { name: "GOAL 14: Life Below Water", count: 1283 },
+    { name: "GOAL 6: Clean Water and Sanitation", count: 1192 },
+    { name: "GOAL 11: Sustainable Cities and Communities", count: 928 },
+    { name: "GOAL 3: Good Health and Well-being", count: 577 },
+  ],
+  concepts: [
+    { name: "Lorem Ipsum Concept 1", count: 120 },
+    { name: "Lorem Ipsum Concept 2", count: 98 },
+    { name: "Lorem Ipsum Concept 3", count: 75 },
+    { name: "Lorem Ipsum Concept 4", count: 60 },
+    { name: "Lorem Ipsum Concept 5", count: 40 },
+  ],
+  profile: [
+    { name: "Lorem Ipsum Author 1", count: 324 },
+    { name: "Lorem Ipsum Author 2", count: 280 },
+    { name: "Lorem Ipsum Author 3", count: 257 },
+    { name: "Lorem Ipsum Author 4", count: 210 },
+    { name: "Lorem Ipsum Author 5", count: 190 },
+  ],
+  type: [
+    { name: "Lorem Ipsum Type 1", count: 177 },
+    { name: "Lorem Ipsum Type 2", count: 150 },
+    { name: "Lorem Ipsum Type 3", count: 120 },
+    { name: "Lorem Ipsum Type 4", count: 95 },
+    { name: "Lorem Ipsum Type 5", count: 80 },
+  ],
+  sjr: [
+    { name: "Q-None", count: 18855 },
+    { name: "Q1", count: 3381 },
+    { name: "Q3", count: 1739 },
+    { name: "Q4", count: 1120 },
+  ],
+};
+
+const SidebarSection = ({ title, items, showAll, onToggleShowAll }) => {
+  const visibleItems = showAll ? items : items.slice(0, 5);
+  
+  return (
+    <div className='mb-6'>
+      <h4 className='font-medium text-sm mb-2'>{title}</h4>
+      <ul className='space-y-2 text-sm text-gray-600'>
+        {visibleItems.map((item, index) => (
+          <li key={index} className='group'>
+            <label className='flex items-center justify-between w-full hover:bg-gray-50 p-1 rounded'>
+              <div className='flex items-center gap-2 min-w-0'>
+                <input 
+                  type='checkbox' 
+                  className='flex-shrink-0 rounded border-gray-300 text-[#d52727]' 
+                />
+                <span className='truncate' title={item.name}>
+                  {item.name}
+                </span>
+              </div>
+              <span className='flex-shrink-0 text-gray-400 text-xs ml-2'>
+                {item.count.toLocaleString()}
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
+      {items.length > 5 && (
+        <button
+          onClick={onToggleShowAll}
+          className='text-[#d52727] hover:text-[#b31f1f] text-sm mt-2 transition-colors flex items-center'
+        >
+          {showAll ? (
+            <>
+              <span className='material-symbols-outlined text-base mr-1'>expand_less</span>
+              Show less
+            </>
+          ) : (
+            <>
+              <span className='material-symbols-outlined text-base mr-1'>expand_more</span>
+              See more
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
+};
 
 export default function Organization() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [sortAsc, setSortAsc] = useState(false);
-  const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
+  // State for search and filters
   const [error, setError] = useState(null);
+  const [sortAsc, setSortAsc] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [expandedSections, setExpandedSections] = useState({
+    sdg: false,
+    concepts: false,
+    profile: false,
+    type: false,
+    sjr: false
+  });
+  const [organizations, setOrganizations] = useState([]);
   const [pagination, setPagination] = useState({
     page: 0,
     size: 20,
@@ -19,8 +114,41 @@ export default function Organization() {
     to: 0
   });
 
-  // Debounced search
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  // Fetch organizations
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        setLoading(true);
+        const response = await getOrganizations({
+          page: pagination.page,
+          size: pagination.size,
+          sort: sortAsc ? 'name,asc' : 'name,desc',
+          query: debouncedQuery
+        });
+        setOrganizations(response.content || []);
+        setPagination(prev => ({
+          ...prev,
+          totalPages: response.totalPages || 1,
+          totalElements: response.totalElements || 0,
+          from: response.number * response.size + 1,
+          to: Math.min((response.number + 1) * response.size, response.totalElements)
+        }));
+      } catch (err) {
+        setError(err.message || 'Failed to fetch organizations');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrganizations();
+  }, [pagination.page, pagination.size, sortAsc, debouncedQuery]);
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -83,29 +211,72 @@ export default function Organization() {
   }, [organizations, sortAsc]);
 
   return (
-    <div className='bg-[#FFFFFF] min-h-screen'>
+    <div className='bg-white min-h-screen'>
       <FindOrganization query={query} setQuery={setQuery} />
 
-      <div className='max-w-7xl mx-auto px-6 md:px-12 py-10 flex gap-8'>
-        <aside className='w-64 hidden md:block bg-white shadow-sm rounded-md p-4'>
-          <h3 className='font-semibold mb-4'>Filters for Organization</h3>
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-10'>
+        {/* Mobile filter button */}
+        <div className='md:hidden mb-4'>
+          <button
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className='flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
+          >
+            <span className='material-symbols-outlined text-lg'>filter_alt</span>
+            {showMobileFilters ? 'Hide Filters' : 'Show Filters'}
+          </button>
+        </div>
 
-          <div className='mb-6'>
-            <h4 className='font-medium text-sm mb-2'>Concepts</h4>
-            <ul className='space-y-2 text-sm text-gray-600'>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <li key={`c-${i}`}>
-                  <label className='flex items-start gap-2'>
-                    <input type='checkbox' />
-                    Dummy concept {i + 1}
-                  </label>
-                </li>
-              ))}
-            </ul>
-            <button className='text-blue-600 text-sm mt-2'>
-              See more &gt;
-            </button>
+        <div className='flex flex-col md:flex-row gap-6 lg:gap-8'>
+          {/* Sidebar - Hidden on mobile unless toggled */}
+          <aside className={`${showMobileFilters ? 'block' : 'hidden'} md:block w-full md:w-64 bg-white shadow-sm rounded-md p-4 h-fit`}>
+          <h2 className='font-semibold mb-4'>Filters for Organization</h2>
+          
+          <div className='mb-4'>
+            <h4 className='font-medium text-sm mb-2'>Sort By</h4>
+            <select
+              className='w-full border border-gray-300 p-2 rounded text-sm focus:border-[#d52727] focus:ring-1 focus:ring-[#d52727]'
+              value={sortAsc ? "asc" : "desc"}
+              onChange={(e) => setSortAsc(e.target.value === "asc")}
+            >
+              <option value='asc'>Title (A–Z)</option>
+              <option value='desc'>Title (Z–A)</option>
+            </select>
           </div>
+
+          <SidebarSection
+            title='Sustainable Development Goals'
+            items={sidebarData.sdg}
+            showAll={expandedSections.sdg}
+            onToggleShowAll={() => toggleSection('sdg')}
+          />
+          
+          <SidebarSection
+            title='Concepts'
+            items={sidebarData.concepts}
+            showAll={expandedSections.concepts}
+            onToggleShowAll={() => toggleSection('concepts')}
+          />
+          
+          <SidebarSection
+            title='Profile'
+            items={sidebarData.profile}
+            showAll={expandedSections.profile}
+            onToggleShowAll={() => toggleSection('profile')}
+          />
+          
+          <SidebarSection
+            title='Type'
+            items={sidebarData.type}
+            showAll={expandedSections.type}
+            onToggleShowAll={() => toggleSection('type')}
+          />
+          
+          <SidebarSection
+            title='SJR'
+            items={sidebarData.sjr}
+            showAll={expandedSections.sjr}
+            onToggleShowAll={() => toggleSection('sjr')}
+          />
 
           <div className='mb-6'>
             <h4 className='font-medium text-sm mb-2'>
@@ -121,7 +292,7 @@ export default function Organization() {
                 </li>
               ))}
             </ul>
-            <button className='text-blue-600 text-sm mt-2'>
+            <button className='text-[#d52727] hover:text-[#b31f1f] text-sm mt-2 transition-colors'>
               See more &gt;
             </button>
           </div>
@@ -138,7 +309,7 @@ export default function Organization() {
                 </li>
               ))}
             </ul>
-            <button className='text-blue-600 text-sm mt-2'>
+            <button className='text-[#d52727] hover:text-[#b31f1f] text-sm mt-2 transition-colors'>
               See more &gt;
             </button>
           </div>
@@ -155,7 +326,7 @@ export default function Organization() {
                 </li>
               ))}
             </ul>
-            <button className='text-blue-600 text-sm mt-2'>
+            <button className='text-[#d52727] hover:text-[#b31f1f] text-sm mt-2 transition-colors'>
               See more &gt;
             </button>
           </div>
@@ -172,7 +343,7 @@ export default function Organization() {
                 </li>
               ))}
             </ul>
-            <button className='text-blue-600 text-sm mt-2'>
+            <button className='text-[#d52727] hover:text-[#b31f1f] text-sm mt-2 transition-colors'>
               See more &gt;
             </button>
           </div>
@@ -181,18 +352,15 @@ export default function Organization() {
         {/* Results */}
         <main className='flex-1'>
           {/* Summary row */}
-          <div className='flex items-center justify-between border-b pb-3 mb-6'>
+          <div className='flex flex-col xs:flex-row items-start xs:items-center justify-between pb-4 border-b border-gray-200 mb-6'>
             <p className='text-sm text-gray-600'>
-              {pagination.from || 1} - {pagination.to || filtered.length} out of {pagination.totalElements || filtered.length} results
+              {pagination.from || 1} - {pagination.to || filtered.length} of {pagination.totalElements || filtered.length} results
             </p>
-            <div className='flex items-center gap-5 text-sm'>
-              <button
-                className='text-gray-700'
-                onClick={() => setSortAsc((v) => !v)}
-              >
-                Last name ({sortAsc ? "ascending" : "descending"})&gt;
+            <div className='flex items-center gap-4 text-sm mt-2 xs:mt-0'>
+              <button className='text-[#d52727] hover:text-[#b31f1f] transition-colors flex items-center'>
+                <span className='material-symbols-outlined text-base mr-1'>download</span>
+                Export
               </button>
-              <button className='text-blue-600'>Export search results</button>
             </div>
           </div>
 
@@ -219,28 +387,28 @@ export default function Organization() {
           )}
           {/* List */}
           {!loading && !error && filtered.length > 0 && (
-            <div className='space-y-6'>
-              {filtered.map((item) => (
-                <article 
-                  key={item.id} 
-                  className='border-b pb-4 cursor-pointer hover:bg-gray-50 p-4 rounded-md transition-colors'
-                  onClick={() => {
-                    // For now, just show an alert. You can implement detail page later
-                    alert(`Organization: ${item.title}\nType: ${item.type}\nURL: ${item.url || 'No URL'}`);
-                  }}
+            <div className='space-y-4'>
+              {filtered.map((org) => (
+                <div 
+                  key={org.id}
+                  className='border-b border-gray-200 py-3 last:border-b-0 last:pb-0 hover:bg-gray-50 rounded-md transition-colors cursor-pointer'
                 >
-                  <h2 className='font-semibold text-lg text-gray-900 hover:text-blue-600 transition-colors'>
-                    {item.title}
-                  </h2>
-                  <p className='text-gray-600 text-sm line-clamp-2'>{item.desc}</p>
-                  <div className='mt-2 text-sm text-gray-500'>
-                    {item.itemCount} items • Click to view details
+                  <div className='flex items-center justify-between px-2'>
+                    <div className='min-w-0'>
+                      <h3 className='text-sm font-medium text-gray-900'>{org.title}</h3>
+                      <div className='mt-1 flex items-center text-xs text-gray-500'>
+                        <span className='material-symbols-outlined text-sm mr-1'>location_on</span>
+                        <span>Indonesia</span>
+                      </div>
+                    </div>
+                    <span className='material-symbols-outlined text-gray-400'>chevron_right</span>
                   </div>
-                </article>
+                </div>
               ))}
             </div>
           )}
         </main>
+        </div>
       </div>
     </div>
   );

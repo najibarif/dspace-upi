@@ -7,9 +7,9 @@ function SidebarSection({ title, items }) {
   const visibleItems = showAll ? items : items.slice(0, 5);
 
   return (
-    <div className="mb-6">
-      <h3 className="font-medium text-sm mb-2">{title}</h3>
-      <div className="space-y-2 text-sm text-gray-600">
+    <div className="mb-4 sm:mb-6">
+      <h3 className="font-medium text-sm sm:text-sm mb-2 sm:mb-2">{title}</h3>
+      <div className="space-y-2 sm:space-y-2 text-sm sm:text-sm text-gray-600">
         {visibleItems.map((item, idx) => (
           <label key={idx} className="flex items-center gap-2">
             <input type="checkbox" />
@@ -21,7 +21,7 @@ function SidebarSection({ title, items }) {
       {items.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="text-blue-600 text-sm mt-2"
+          className="text-blue-600 text-sm sm:text-sm mt-2 sm:mt-2"
         >
           {showAll ? "Show less" : "See more >"}
         </button>
@@ -74,6 +74,7 @@ const dummyProjects = Array.from({ length: 6 }).map((_, idx) => ({
 
 export default function Project() {
   const [sortAsc, setSortAsc] = useState(true);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Filter & Sort
   const sortedProjects = useMemo(() => {
@@ -84,17 +85,27 @@ export default function Project() {
   }, [sortAsc]);
 
   return (
-    <section className="bg-gray-50 min-h-screen">
+    <section className="bg-white min-h-screen">
       <FindProject />
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 flex gap-8">
-        {/* Sidebar Filter */}
-        <aside className="w-64 hidden md:block bg-white shadow-sm rounded-md p-4 h-fit">
-          <h2 className="font-semibold mb-4">Filters for Project</h2>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-10">
+        {/* Mobile filter button */}
+        <div className="md:hidden mb-4">
+          <button
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors"
+          >
+            <span className="material-symbols-outlined text-lg">filter_alt</span>
+            {showMobileFilters ? 'Hide Filters' : 'Show Filters'}
+          </button>
+        </div>
 
+        <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
+          {/* Sidebar Filter */}
+          <aside className={`${showMobileFilters ? 'block' : 'hidden'} md:block w-full md:w-64 bg-white shadow-sm rounded-md p-4 h-fit`}>
           {/* Sort */}
           <div className="mb-4">
-            <h3 className="font-medium text-sm mb-2">Sort By</h3>
+            <h3 className="font-medium text-sm sm:text-sm mb-2">Sort By</h3>
             <select
               className="w-full border p-2 rounded text-sm"
               value={sortAsc ? "asc" : "desc"}
@@ -117,31 +128,31 @@ export default function Project() {
               <input
                 type="number"
                 placeholder="From"
-                className="w-1/2 border p-2 rounded"
+                className="w-1/2 border p-2 rounded text-sm"
               />
               <span>to</span>
               <input
                 type="number"
                 placeholder="To"
-                className="w-1/2 border p-2 rounded"
+                className="w-1/2 border p-2 rounded text-sm"
               />
             </div>
           </div>
-        </aside>
+          </aside>
 
-        {/* Main Content */}
-        <main className="flex-1">
+          {/* Main Content */}
+          <main className="flex-1">
           {/* Summary row */}
-          <div className="flex items-center justify-between border-b pb-3 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-3 mb-4 sm:mb-6 gap-2">
             <p className="text-sm text-gray-600">
               1 - {sortedProjects.length} out of {dummyProjects.length} results
             </p>
-            <div className="flex items-center gap-5 text-sm">
+            <div className="flex items-center gap-3 sm:gap-5 text-sm sm:text-sm w-full sm:w-auto">
               <button
-                className="text-gray-700"
+                className="text-gray-700 whitespace-nowrap text-left sm:text-right w-full sm:w-auto"
                 onClick={() => setSortAsc((v) => !v)}
               >
-                Sort by Title ({sortAsc ? "ascending" : "descending"}) &gt;
+                Sort by Title ({sortAsc ? "A-Z" : "Z-A"})
               </button>
             </div>
           </div>
@@ -150,10 +161,10 @@ export default function Project() {
           <div className="space-y-6">
             {sortedProjects.map((project, idx) => (
               <article key={idx} className="border-b pb-4">
-                <h2 className="font-semibold text-lg text-gray-900">{project.title}</h2>
-                <p className="text-sm text-gray-600">Lead: {project.lead}</p>
-                <p className="text-sm text-gray-600">Organization: {project.organization}</p>
-                <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-500">
+                <h2 className="font-semibold text-lg sm:text-lg text-gray-900 mb-2 sm:mb-0">{project.title}</h2>
+                <p className="text-sm sm:text-sm text-gray-600">Lead: {project.lead}</p>
+                <p className="text-sm sm:text-sm text-gray-600">Organization: {project.organization}</p>
+                <div className="mt-2 sm:mt-2 flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-xs text-gray-500">
                   <span>Type: {project.type}</span>
                   <span>|</span>
                   <span>Duration: {project.duration}</span>
@@ -163,7 +174,8 @@ export default function Project() {
               </article>
             ))}
           </div>
-        </main>
+          </main>
+        </div>
       </div>
     </section>
   );

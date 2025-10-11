@@ -4,94 +4,122 @@ import { FaInstagram, FaYoutube } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className='mt-10'>
-      <div className='bg-[#808080] text-white py-8'>
-        <div className='mx-auto px-6 md:px-24'>
+    <footer className='mt-12 bg-gray-50'>
+      <div className='bg-[#808080] text-white py-8 sm:py-10 md:py-12'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='flex flex-col lg:flex-row gap-8 lg:gap-12'>
-            <div className='flex justify-center lg:justify-start'>
-              <div className='flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6'>
-                <img src={logoUpi} alt='UPI Logo' className='h-16 w-auto' />
-                <img src={logoLppm} alt='LPPM Logo' className='h-16 w-auto' />
+            {/* Logo Section */}
+            <div className='flex-1 flex flex-col items-center lg:items-start mb-6 lg:mb-0'>
+              <div className='flex flex-col sm:flex-row items-center gap-6'>
+                <div className='relative h-16 w-32 flex items-center justify-center'>
+                  <img 
+                    src={logoUpi} 
+                    alt='UPI Logo'
+                    width={128}
+                    height={64}
+                    loading='lazy'
+                    decoding='async'
+                    className='h-auto w-full max-h-16 object-contain object-center filter contrast-110 transition-transform duration-300 hover:scale-105'
+                    style={{ imageRendering: 'auto' }}
+                  />
+                </div>
+                <div className='relative h-16 w-32 flex items-center justify-center'>
+                  <img 
+                    src={logoLppm} 
+                    alt='LPPM Logo'
+                    width={128}
+                    height={64}
+                    loading='lazy'
+                    decoding='async'
+                    className='h-auto w-full max-h-16 object-contain object-center filter contrast-110 transition-transform duration-300 hover:scale-105'
+                    style={{ imageRendering: 'auto' }}
+                  />
+                </div>
               </div>
+              <p className='mt-4 text-sm text-gray-200 text-center lg:text-left max-w-xs'>
+                Lembaga Penelitian dan Pengabdian kepada Masyarakat
+              </p>
             </div>
 
-            <div className='grid grid-cols-1 sm:grid-cols-3 gap-8 flex-1'>
-              <div>
-                <h4 className='text-lg md:text-xl font-semibold mb-4 underline text-center sm:text-left'>
+            {/* Contact & Links Section */}
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full'>
+              {/* Contact Info */}
+              <div className='space-y-3'>
+                <h4 className='text-lg font-semibold border-b border-gray-500 pb-2'>
                   Contact Us
                 </h4>
-                <div className='space-y-2 text-sm md:text-base text-center sm:text-left'>
-                  <p className='font-semibold'>
+                <div className='space-y-2 text-sm text-gray-200'>
+                  <p className='font-medium'>
                     Universitas Pendidikan Indonesia
                   </p>
                   <p>Jl. Dr. Setiabudhi No. 229 Bandung</p>
-                  <p>40154</p>
-                  <p>West Java - Indonesia</p>
-                  <p>E-mail: </p>
+                  <p>40154, West Java - Indonesia</p>
+                  <p>Email: lppm@upi.edu</p>
+                  <p>Phone: +62 22 2013163</p>
                 </div>
               </div>
 
-              <div>
-                <h4 className='text-lg md:text-xl font-semibold mb-4 underline text-center sm:text-left'>
-                  Important links
+              {/* Quick Links */}
+              <div className='space-y-3'>
+                <h4 className='text-lg font-semibold border-b border-gray-500 pb-2'>
+                  Quick Links
                 </h4>
-                <div className='space-y-2 text-sm md:text-base text-center sm:text-left'>
-                  <a
-                    href='https://sinta.kemdiktisaintek.go.id/affiliations/profile/414'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='block hover:text-gray-300 transition-colors'
-                  >
-                    SINTA UPI
-                  </a>
-                  <a
-                    href='https://litabmas.upi.edu/'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='block hover:text-gray-300 transition-colors'
-                  >
-                    Litabmas UPI
-                  </a>
-                  <a
-                    href='https://kkn.upi.edu/login'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='block hover:text-gray-300 transition-colors'
-                  >
-                    KKN Tematik & P2MB
-                  </a>
-                  <a
-                    href='https://bima.kemdiktisaintek.go.id/'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='block hover:text-gray-300 transition-colors'
-                  >
-                    BIMA
-                  </a>
-                </div>
+                <nav className='space-y-2'>
+                  {[
+                    { name: 'SINTA UPI', href: 'https://sinta.kemdikbud.go.id/affiliations/profile/414' },
+                    { name: 'Litabmas UPI', href: 'https://litabmas.upi.edu/' },
+                    { name: 'KKN Tematik & P2MB', href: 'https://kkn.upi.edu/login' },
+                    { name: 'BIMA', href: 'https://bima.kemdikbud.go.id/' },
+                    { name: 'Simlitabmas', href: 'https://simlitabmas.kemdikbud.go.id/' }
+                  ].map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='block text-gray-200 hover:text-white transition-colors duration-200 hover:pl-2'
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </nav>
               </div>
 
-              <div>
-                <h4 className='text-lg md:text-xl font-semibold mb-4 underline text-center sm:text-left'>
-                  Follow us
+              {/* Social Media */}
+              <div className='space-y-3'>
+                <h4 className='text-lg font-semibold border-b border-gray-500 pb-2'>
+                  Follow Us
                 </h4>
-                <div className='flex justify-center sm:justify-start space-x-4'>
-                  <a
-                    href='https://www.instagram.com/dppmupi_untukindonesia/'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='text-white hover:text-gray-300 transition-colors'
-                  >
-                    <FaInstagram className='w-6 h-6' />
-                  </a>
-                  <a
-                    href='https://www.youtube.com/@lppmupi3369'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='text-white hover:text-gray-300 transition-colors'
-                  >
-                    <FaYoutube className='w-6 h-6' />
-                  </a>
+                <div className='flex space-x-4 pt-1'>
+                  {[
+                    {
+                      icon: <FaInstagram className='w-5 h-5' />,
+                      href: 'https://www.instagram.com/dppmupi_untukindonesia/',
+                      label: 'Instagram'
+                    },
+                    {
+                      icon: <FaYoutube className='w-5 h-5' />,
+                      href: 'https://www.youtube.com/@lppmupi3369',
+                      label: 'YouTube'
+                    }
+                  ].map((social) => (
+                    <a
+                      key={social.label}
+                      href={social.href}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-colors duration-200'
+                      aria-label={social.label}
+                    >
+                      {social.icon}
+                    </a>
+                  ))}
+                </div>
+                
+                <div className='pt-2'>
+                  <p className='text-sm text-gray-300'>
+                    Stay updated with our latest activities
+                  </p>
                 </div>
               </div>
             </div>
@@ -99,11 +127,22 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className='bg-black text-white py-4 md:py-5'>
-        <div className='max-w-7xl mx-auto px-6 md:px-24 text-center'>
-          <p className='text-sm md:text-base'>
-            &copy; Universitas Pendidikan Indonesia 2025
-          </p>
+      {/* Copyright Section */}
+      <div className='bg-black text-white py-4'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+          <div className='flex flex-col md:flex-row justify-between items-center'>
+            <p className='text-sm text-gray-300'>
+              &copy; {new Date().getFullYear()} LPPM UPI. All rights reserved.
+            </p>
+            <div className='mt-2 md:mt-0 flex space-x-4'>
+              <a href='#' className='text-sm text-gray-300 hover:text-white transition-colors'>
+                Privacy Policy
+              </a>
+              <a href='#' className='text-sm text-gray-300 hover:text-white transition-colors'>
+                Terms of Service
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

@@ -24,7 +24,7 @@ function SidebarSection({ title, items }) {
       {items.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className='text-blue-600 text-sm mt-2'
+          className='text-[#d52727] hover:text-[#b31f1f] text-sm mt-2 transition-colors'
         >
           {showAll ? "Show less" : "See more >"}
         </button>
@@ -95,6 +95,7 @@ export default function Paper() {
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -118,6 +119,20 @@ export default function Paper() {
   }, []);
 
   const [sortAsc, setSortAsc] = useState(true);
+  
+  // Close mobile filters when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMobileFilters && !event.target.closest('aside') && !event.target.closest('button')) {
+        setShowMobileFilters(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMobileFilters]);
 
   const sortedPapers = useMemo(() => {
     return [...papers].sort((a, b) =>
@@ -126,17 +141,30 @@ export default function Paper() {
   }, [papers, sortAsc]);
 
   return (
-    <section className='bg-gray-50 min-h-screen'>
+    <section className='bg-white min-h-screen'>
       <FindPaper />
 
-      <div className='max-w-7xl mx-auto px-6 md:px-12 py-10 flex gap-8'>
-        <aside className='w-64 hidden md:block bg-white shadow-sm rounded-md p-4 h-fit'>
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-10'>
+        {/* Mobile filter button */}
+        <div className='md:hidden mb-4'>
+          <button
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className='flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
+          >
+            <span className='material-symbols-outlined text-lg'>filter_alt</span>
+            {showMobileFilters ? 'Hide Filters' : 'Show Filters'}
+          </button>
+        </div>
+
+        <div className='flex flex-col md:flex-row gap-6 lg:gap-8'>
+          {/* Sidebar - Hidden on mobile unless toggled */}
+          <aside className={`${showMobileFilters ? 'block' : 'hidden'} md:block w-full md:w-64 bg-white shadow-sm rounded-md p-4 h-fit`}>
           <h2 className='font-semibold mb-4'>Filters for Paper</h2>
 
           <div className='mb-4'>
             <h4 className='font-medium text-sm mb-2'>Sort By</h4>
             <select
-              className='w-full border p-2 rounded text-sm'
+              className='w-full border border-gray-300 p-2 rounded text-sm focus:border-[#d52727] focus:ring-1 focus:ring-[#d52727]'
               value={sortAsc ? "asc" : "desc"}
               onChange={(e) => setSortAsc(e.target.value === "asc")}
             >
@@ -153,22 +181,22 @@ export default function Paper() {
           <SidebarSection title='Profile' items={sidebarData.profile} />
           <SidebarSection title='Type' items={sidebarData.type} />
           <SidebarSection title='SJR' items={sidebarData.sjr} />
-        </aside>
+          </aside>
 
-        <main className='flex-1'>
-          <div className='flex items-center justify-between border-b pb-3 mb-6'>
-            <p className='text-sm text-gray-600'>
-              Showing {sortedPapers.length}{" "}
-              {sortedPapers.length === 1 ? "result" : "results"}
+          <main className='flex-1'>
+          <div className='flex flex-col xs:flex-row items-start xs:items-center justify-between border-b pb-3 mb-6 gap-3'>
+            <p className='text-sm text-gray-600 whitespace-nowrap'>
+              {sortedPapers.length} {sortedPapers.length === 1 ? "result" : "results"}
             </p>
-            <div className='flex items-center gap-5 text-sm'>
-              <button
-                className='text-gray-700'
-                onClick={() => setSortAsc((v) => !v)}
-              >
-                Sort by title ({sortAsc ? "ascending" : "descending"}) &gt;
-              </button>
-            </div>
+            <button
+              className='text-sm text-[#d52727] hover:text-[#b31f1f] flex items-center gap-1 transition-colors'
+              onClick={() => setSortAsc((v) => !v)}
+            >
+              <span className='material-symbols-outlined text-base'>
+                {sortAsc ? 'arrow_upward' : 'arrow_downward'}
+              </span>
+              Sort {sortAsc ? 'A-Z' : 'Z-A'}
+            </button>
           </div>
 
           {loading ? (
@@ -187,11 +215,11 @@ export default function Paper() {
           ) : (
             <div className='space-y-6'>
               {sortedPapers.map((paper) => (
-                <article key={paper.id} className='border-b pb-4'>
-                  <h2 className='font-semibold text-lg text-gray-900'>
+                <article key={paper.id} className='border-b pb-4 hover:bg-gray-50 transition-colors duration-150 p-3 rounded-md -mx-3'>
+                  <h2 className='font-semibold text-base sm:text-lg text-gray-900'>
                     <Link
                       to={`/paper/${paper.id}`}
-                      className='hover:text-blue-600 transition-colors'
+                      className='hover:text-[#d52727] transition-colors'
                     >
                       {paper.title}
                     </Link>
@@ -222,7 +250,21 @@ export default function Paper() {
               ))}
             </div>
           )}
-        </main>
+          </main>
+        </div>
+        <style>{`
+          @media (max-width: 768px) {
+            .md\:flex-row {
+              flex-direction: column;
+            }
+            .md\:w-64 {
+              width: 100%;
+            }
+            .md:h-fit {
+              height: auto;
+            }
+          }
+        `}</style>
       </div>
     </section>
   );
