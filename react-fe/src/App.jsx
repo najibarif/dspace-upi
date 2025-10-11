@@ -13,7 +13,6 @@ import Outreach from "./pages/Outreach";
 import Thesis from "./pages/Thesis";
 import Equipments from "./pages/Equipments";
 import Organization from "./pages/Organization";
-import Patent from "./pages/Patent";
 import Profile from "./pages/Profile";
 
 export default function App() {
