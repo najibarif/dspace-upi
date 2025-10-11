@@ -10,6 +10,7 @@ const navItems = [
   { label: "Paper", href: "/paper" },
   { label: "Project", href: "/project" },
   { label: "Patent", href: "/patent" },
+  { label: "Organization", href: "/organization" },
   { label: "Outreach", href: "/outreach" },
   { label: "Thesis", href: "/thesis" },
   { label: "Equipment", href: "/equipment" },

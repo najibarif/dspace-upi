@@ -8,9 +8,36 @@ use Illuminate\Support\Str;
 
 class OrganizationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Organization::all());
+        $query = Organization::query();
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', "%{$searchTerm}%")
+                  ->orWhere('type', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Pagination
+        $page = $request->get('page', 1);
+        $size = $request->get('size', 20);
+        
+        $organizations = $query->paginate($size, ['*'], 'page', $page);
+
+        return response()->json([
+            'data' => $organizations->items(),
+            'pagination' => [
+                'current_page' => $organizations->currentPage(),
+                'per_page' => $organizations->perPage(),
+                'total' => $organizations->total(),
+                'last_page' => $organizations->lastPage(),
+                'from' => $organizations->firstItem(),
+                'to' => $organizations->lastItem(),
+            ]
+        ]);
     }
 
     public function show($id)

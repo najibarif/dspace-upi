@@ -66,6 +66,32 @@ const bulkDeletePapers = async (ids) => {
   return response.data;
 };
 
+// ========== Organizations (Laravel) ==========
+const getOrganizations = async (params = {}) => {
+  const response = await api.get('/organizations', { params });
+  return response.data;
+};
+
+const getOrganizationById = async (id) => {
+  const response = await api.get(`/organizations/${id}`);
+  return response.data;
+};
+
+const createOrganization = async (payload) => {
+  const response = await api.post('/organizations', payload);
+  return response.data;
+};
+
+const updateOrganization = async (id, payload) => {
+  const response = await api.put(`/organizations/${id}`, payload);
+  return response.data;
+};
+
+const deleteOrganization = async (id) => {
+  const response = await api.delete(`/organizations/${id}`);
+  return response.data;
+};
+
 // Ekspor fungsi Laravel Papers
 export {
   getPapers,
@@ -74,7 +100,13 @@ export {
   updatePaper,
   deletePaper,
   getPaperStatistics,
-  bulkDeletePapers
+  bulkDeletePapers,
+  // Organizations
+  getOrganizations,
+  getOrganizationById,
+  createOrganization,
+  updateOrganization,
+  deleteOrganization
 };
 
 export default api;

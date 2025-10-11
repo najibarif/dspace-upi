@@ -11,6 +11,7 @@ import Project from "./pages/Project";
 import Outreach from "./pages/Outreach";
 import Thesis from "./pages/Thesis";
 import Equipments from "./pages/Equipments";
+import Organization from "./pages/Organization";
 
 export default function App() {
   return (
@@ -25,6 +26,8 @@ export default function App() {
         <Route path='/outreach' element={<Outreach />} />
         <Route path='/thesis' element={<Thesis />} />
         <Route path='/equipment' element={<Equipments />} />
+        <Route path='/organization' element={<Organization />} />
+        <Route path='/organization/:id' element={<Organization />} />
       </Routes>
 
       <Footer />

@@ -1,4 +1,9 @@
-export default function FindOrganization() {
+export default function FindOrganization({ query, setQuery }) {
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // Search is handled by the parent component through useEffect
+  };
+
   return (
     <section className='bg-[#F5F5F5] min-h-[300px] flex flex-col items-center justify-center pt-24'>
       <div className='text-center w-full max-w-4xl mx-auto px-4'>
@@ -8,14 +13,19 @@ export default function FindOrganization() {
           </span>
           Find Organization
         </h2>
-        <div className='flex flex-col items-center gap-2 px-4'>
+        <form onSubmit={handleSearch} className='flex flex-col items-center gap-2 px-4'>
           <div className='w-full max-w-2xl flex rounded overflow-hidden border border-gray-300'>
             <input
               type='text'
               placeholder='Find Organization title'
               className='flex-1 px-4 py-3 outline-none'
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
             />
-            <button className='bg-gray-700 hover:bg-gray-800 px-8 flex items-center justify-center'>
+            <button 
+              type='submit'
+              className='bg-gray-700 hover:bg-gray-800 px-8 flex items-center justify-center'
+            >
               <span className='material-symbols-outlined text-white'>
                 search
               </span>
@@ -26,7 +36,7 @@ export default function FindOrganization() {
               Advanced Search
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </section>
   );
