@@ -87,6 +87,32 @@ const deleteOrganization = async (id) => {
   return response.data;
 };
 
+// ========== SDGs (Laravel) ==========
+const getSdgs = async (params = {}) => {
+  const response = await api.get('/sdgs', { params });
+  return response.data;
+};
+
+const getSdgById = async (id) => {
+  const response = await api.get(`/sdgs/${id}`);
+  return response.data;
+};
+
+const createSdg = async (payload) => {
+  const response = await api.post('/sdgs', payload);
+  return response.data;
+};
+
+const updateSdg = async (id, payload) => {
+  const response = await api.put(`/sdgs/${id}`, payload);
+  return response.data;
+};
+
+const deleteSdg = async (id) => {
+  const response = await api.delete(`/sdgs/${id}`);
+  return response.data;
+};
+
 // Ekspor fungsi Laravel Papers
 export {
   getPapers,
@@ -101,7 +127,13 @@ export {
   getOrganizationById,
   createOrganization,
   updateOrganization,
-  deleteOrganization
+  deleteOrganization,
+  // SDGs
+  getSdgs,
+  getSdgById,
+  createSdg,
+  updateSdg,
+  deleteSdg
 };
 
 export default api;
