@@ -10,10 +10,8 @@ function getSdgNumberFromId(id) {
 function getSdgImageUrlByNumber(n) {
   if (!n) return null;
   const num = String(n).padStart(2, "0");
-  return new URL(
-    `../../assets/sdgs/E-WEB-Goal-${num} 1.png`,
-    import.meta.url
-  ).toString();
+  const fileName = `E-WEB-Goal-${num} 1.png`;
+  return `http://127.0.0.1:8000/storage/sdgs/${encodeURIComponent(fileName)}`;
 }
 
 const decodeAbstract = (abstractInvertedIndex) => {
