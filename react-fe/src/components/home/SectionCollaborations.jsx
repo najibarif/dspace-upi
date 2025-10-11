@@ -1,46 +1,133 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { geoEqualEarth, geoPath } from "d3-geo";
+import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const openAlexApiUrl =
+  "https://api.openalex.org/works?filter=institutions.id:i130218214&group_by=authorships.institutions.country_code";
 
-const dummyCollaborations = [
-  {
-    name: "United States",
-    coordinates: [-98.35, 39.5],
-    profiles: 120,
-    outputs: 240,
-  },
-  {
-    name: "United Kingdom",
-    coordinates: [-1.5, 52.3],
-    profiles: 75,
-    outputs: 160,
-  },
-  { name: "Germany", coordinates: [10.45, 51.16], profiles: 88, outputs: 170 },
-  { name: "Japan", coordinates: [138.25, 36.2], profiles: 66, outputs: 140 },
-  {
-    name: "Australia",
-    coordinates: [133.77, -25.27],
-    profiles: 40,
-    outputs: 95,
-  },
-  {
-    name: "Indonesia",
-    coordinates: [113.92, -0.79],
-    profiles: 52,
-    outputs: 110,
-  },
-  { name: "China", coordinates: [104.2, 35.86], profiles: 90, outputs: 200 },
-  { name: "India", coordinates: [78.96, 20.59], profiles: 72, outputs: 150 },
-  { name: "Brazil", coordinates: [-51.9, -14.2], profiles: 45, outputs: 98 },
-  {
-    name: "South Africa",
-    coordinates: [22.94, -30.56],
-    profiles: 28,
-    outputs: 64,
-  },
-];
+const countryCoordinates = {
+  Indonesia: [113.92, -0.79],
+  Malaysia: [101.98, 4.21],
+  Japan: [138.25, 36.2],
+  "United States of America": [-98.35, 39.5],
+  Australia: [133.77, -25.27],
+  China: [104.2, 35.86],
+  "Korea, Republic of": [127.77, 35.91],
+  "United Kingdom of Great Britain and Northern Ireland": [-1.5, 52.3],
+  India: [78.96, 20.59],
+  Thailand: [100.99, 15.87],
+  "Saudi Arabia": [45.08, 23.89],
+  Turkey: [35.24, 38.96],
+  Canada: [-106.35, 56.13],
+  Singapore: [103.82, 1.35],
+  "Russian Federation": [105.32, 61.52],
+  "Taiwan, Province of China": [121.52, 25.04],
+  Netherlands: [5.29, 52.13],
+  Pakistan: [69.35, 30.38],
+  "Brunei Darussalam": [114.73, 4.54],
+  Spain: [-3.75, 40.46],
+  Qatar: [51.18, 25.35],
+  France: [2.21, 46.23],
+  Nigeria: [8.68, 9.08],
+  Philippines: [121.77, 12.88],
+  Sudan: [30.22, 12.86],
+  "Iran, Islamic Republic of": [53.69, 32.43],
+  Germany: [10.45, 51.16],
+  "United Arab Emirates": [53.85, 23.42],
+  Ghana: [-1.02, 7.94],
+  Bangladesh: [90.36, 23.69],
+  Iraq: [43.68, 33.22],
+  "New Zealand": [174.89, -40.9],
+  Peru: [-77.04, -9.19],
+  Hungary: [19.5, 47.16],
+  "Viet Nam": [108.28, 14.06],
+  Italy: [12.57, 41.87],
+  Slovenia: [14.99, 46.15],
+  Bulgaria: [25.49, 42.73],
+  Mexico: [-102.55, 23.63],
+  "Hong Kong": [114.17, 22.32],
+  Poland: [19.39, 51.92],
+  Finland: [25.75, 61.92],
+  Sweden: [18.64, 60.13],
+  "South Africa": [22.94, -30.56],
+  Brazil: [-51.9, -14.2],
+  Czechia: [15.47, 49.82],
+  "Sri Lanka": [80.77, 7.87],
+  Egypt: [30.8, 26.82],
+  Morocco: [-7.09, 31.79],
+  Portugal: [-8.22, 39.4],
+  Chile: [-71.54, -35.68],
+  Romania: [24.97, 45.94],
+  Uzbekistan: [64.59, 41.38],
+  Jordan: [36.24, 30.59],
+  Kenya: [37.91, -0.02],
+  Slovakia: [19.7, 48.67],
+  "Tanzania, United Republic of": [34.89, -6.37],
+  Uganda: [32.29, 1.37],
+  Azerbaijan: [47.58, 40.14],
+  Croatia: [15.2, 45.1],
+  "Bosnia and Herzegovina": [17.68, 43.92],
+  Colombia: [-74.3, 4.57],
+  Ethiopia: [40.49, 9.15],
+  Norway: [8.47, 60.47],
+  Yemen: [48.52, 15.55],
+  Austria: [14.55, 47.52],
+  Estonia: [25.01, 58.6],
+  Mongolia: [103.85, 46.86],
+  Afghanistan: [67.71, 33.94],
+  Switzerland: [8.23, 46.82],
+  Kuwait: [47.48, 29.31],
+  Malawi: [34.3, -13.25],
+  "Papua New Guinea": [143.96, -6.31],
+  Belgium: [4.47, 50.5],
+  Denmark: [9.5, 56.26],
+  Serbia: [21.01, 44.02],
+  Zimbabwe: [29.15, -19.02],
+  Bahrain: [50.64, 25.93],
+  Algeria: [1.66, 28.03],
+  Fiji: [-178.07, -16.58],
+  Israel: [34.85, 31.05],
+  Kyrgyzstan: [74.77, 41.2],
+  Kazakhstan: [66.92, 48.02],
+  Lebanon: [35.86, 33.85],
+  Libya: [17.23, 26.34],
+  "Moldova, Republic of": [28.37, 47.41],
+  Panama: [-80.78, 8.54],
+  Tunisia: [9.54, 33.89],
+  Armenia: [45.04, 40.07],
+  Argentina: [-63.62, -38.42],
+  Burundi: [29.92, -3.37],
+  Cyprus: [33.43, 35.13],
+  Greece: [21.82, 39.07],
+  Cambodia: [104.99, 12.57],
+  Myanmar: [95.96, 21.91],
+  Nepal: [84.12, 28.39],
+  "Palestine, State of": [35.23, 31.95],
+  Ukraine: [31.17, 48.38],
+  Albania: [20.17, 41.15],
+  Botswana: [24.68, -22.33],
+  "Côte d'Ivoire": [-5.55, 7.54],
+  Cameroon: [12.35, 7.37],
+  Cuba: [-77.78, 21.52],
+  Georgia: [43.36, 42.32],
+  "Equatorial Guinea": [10.27, 1.65],
+  Ireland: [-8.24, 53.41],
+  Kiribati: [-157.36, 1.87],
+  "Lao People's Democratic Republic": [102.5, 19.86],
+  Lesotho: [28.23, -29.61],
+  Lithuania: [23.88, 55.17],
+  Latvia: [24.6, 56.88],
+  "North Macedonia": [21.75, 41.61],
+  Macao: [113.54, 22.19],
+  Mauritania: [-10.94, 21.01],
+  Oman: [55.92, 21.51],
+  Seychelles: [55.49, -4.68],
+  Suriname: [-56.03, 3.92],
+  "Timor-Leste": [125.73, -8.87],
+  Vanuatu: [166.96, -15.38],
+  Zambia: [27.85, -13.13],
+};
 
 export default function SectionCollaborations() {
   const [hover, setHover] = useState(null);
@@ -48,8 +135,88 @@ export default function SectionCollaborations() {
   const containerRef = useRef(null);
   const [view, setView] = useState({ center: [0, 0], zoom: 1 });
   const [mapSize, setMapSize] = useState({ width: 980, height: 430 });
+  const [collaborations, setCollaborations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const markers = useMemo(() => dummyCollaborations, []);
+  useEffect(() => {
+    let alive = true;
+
+    const fetchCollaborations = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(openAlexApiUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!alive) return;
+
+        const transformedData =
+          data.group_by
+            ?.map((item) => {
+              const countryName = item.key_display_name;
+              const coordinates = countryCoordinates[countryName];
+
+              if (!coordinates) return null;
+
+              return {
+                name: countryName,
+                coordinates: coordinates,
+                profiles: Math.floor(item.count * 0.3),
+                outputs: item.count,
+              };
+            })
+            .filter((item) => item !== null)
+            .sort((a, b) => b.outputs - a.outputs)
+            .slice(0, 50) || [];
+
+        setCollaborations(transformedData);
+      } catch (err) {
+        if (!alive) return;
+        console.error("Error fetching collaborations data:", err);
+        setError(err.message);
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchCollaborations();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const markers = useMemo(() => {
+    if (collaborations.length === 0) return [];
+
+    const outputs = collaborations.map((c) => c.outputs);
+    const minOutputs = Math.min(...outputs);
+    const maxOutputs = Math.max(...outputs);
+
+    return collaborations.map((collaboration) => ({
+      ...collaboration,
+      dotSize:
+        minOutputs === maxOutputs
+          ? 8
+          : 4 +
+            ((collaboration.outputs - minOutputs) / (maxOutputs - minOutputs)) *
+              16,
+      haloSize:
+        minOutputs === maxOutputs
+          ? 12
+          : 8 +
+            ((collaboration.outputs - minOutputs) / (maxOutputs - minOutputs)) *
+              22,
+    }));
+  }, [collaborations]);
 
   const aspect = 980 / 430;
   useEffect(() => {
@@ -84,7 +251,7 @@ export default function SectionCollaborations() {
   }, []);
 
   const projection = useMemo(() => {
-    return geoEqualEarth().fitSize([mapSize.width, mapSize.height], {
+    return geoNaturalEarth1().fitSize([mapSize.width, mapSize.height], {
       type: "Sphere",
     });
   }, [mapSize.width, mapSize.height]);
@@ -128,9 +295,43 @@ export default function SectionCollaborations() {
           country/territory from the list
         </p>
 
+        {loading && (
+          <div className='mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md'>
+            <div className='flex items-center'>
+              <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2'></div>
+              <span className='text-sm text-blue-700'>
+                Loading collaborations data...
+              </span>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className='mb-4 p-4 bg-red-50 border border-red-200 rounded-md'>
+            <div className='flex items-center'>
+              <svg
+                className='h-4 w-4 text-red-600 mr-2'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                />
+              </svg>
+              <span className='text-sm text-red-700'>
+                Failed to load data: {error}. Using fallback data.
+              </span>
+            </div>
+          </div>
+        )}
+
         <div
           ref={containerRef}
-          className='relative overflow-hidden'
+          className='relative overflow-hidden bg-white rounded-lg border border-gray-200'
           style={{ touchAction: "none" }}
           onWheelCapture={(e) => {
             if (e.ctrlKey) {
@@ -163,9 +364,9 @@ export default function SectionCollaborations() {
                 <path
                   key={idx}
                   d={pathGen(feat)}
-                  fill='#eef2f7'
-                  stroke='#cfd8e3'
-                  strokeWidth={1}
+                  fill='#f5f5f5'
+                  stroke='#d1d5db'
+                  strokeWidth={0.5}
                 />
               ))}
               {markers.map((m) => {
@@ -179,14 +380,14 @@ export default function SectionCollaborations() {
                     onMouseEnter={() => setHover(m)}
                     onMouseLeave={() => setHover(null)}
                   >
+                    <circle r={m.haloSize} fill='#374151' opacity={0.15} />
                     <circle
-                      r={5.5}
-                      fill='#111827'
-                      stroke='#ffffff'
-                      strokeWidth={2}
-                      opacity={0.9}
+                      r={m.dotSize}
+                      fill='#374151'
+                      stroke='#9ca3af'
+                      strokeWidth={1}
+                      opacity={1}
                     />
-                    <circle r={10} fill='#111827' opacity={0.08} />
                   </g>
                 );
               })}
@@ -271,6 +472,35 @@ export default function SectionCollaborations() {
             </div>
           )}
         </div>
+
+        {!loading && collaborations.length > 0 && (
+          <div className='mt-6 p-4 bg-gray-50 rounded-lg'>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+              <div className='text-center'>
+                <div className='text-2xl font-bold text-gray-900'>
+                  {collaborations.length}
+                </div>
+                <div className='text-sm text-gray-600'>
+                  Negara Berkolaborasi
+                </div>
+              </div>
+              <div className='text-center'>
+                <div className='text-2xl font-bold text-gray-900'>
+                  {collaborations.reduce((sum, item) => sum + item.profiles, 0)}
+                </div>
+                <div className='text-sm text-gray-600'>
+                  Total Profil Peneliti
+                </div>
+              </div>
+              <div className='text-center'>
+                <div className='text-2xl font-bold text-gray-900'>
+                  {collaborations.reduce((sum, item) => sum + item.outputs, 0)}
+                </div>
+                <div className='text-sm text-gray-600'>Total Publikasi</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
