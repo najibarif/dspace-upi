@@ -87,8 +87,43 @@ const deleteOrganization = async (id) => {
   return response.data;
 };
 
-// Ekspor fungsi Laravel Papers
+const openAlexApi = axios.create({
+  baseURL: 'https://api.openalex.org',
+  timeout: 30000
+});
+
+const OPENALEX_DEFAULT_PARAMS = {
+  mailto: 'naufalsidiq@upi.edu'
+};
+
+const getOpenAlexWorks = async ({ page = 1, perPage = 12, q = '', extraFilter = '' } = {}) => {
+  const filterParts = [`institutions.id:I130218214`];
+  if (extraFilter) filterParts.push(extraFilter);
+
+  const response = await openAlexApi.get('/works', {
+    params: {
+      ...OPENALEX_DEFAULT_PARAMS,
+      page,
+      per_page: perPage,
+      search: q || undefined,
+      filter: filterParts.join(',')
+    }
+  });
+  return response.data;
+};
+
+const getOpenAlexWorkById = async (id) => {
+  const cleanId = (id || '').toString().includes('/') ? id : `works/${id}`;
+  const response = await openAlexApi.get(`/${cleanId.replace(/^\//, '')}`, {
+    params: {
+      ...OPENALEX_DEFAULT_PARAMS
+    }
+  });
+  return response.data;
+};
+
 export {
+  // Papper Laravel
   getPapers,
   getPaperById,
   createPaper,
@@ -101,7 +136,10 @@ export {
   getOrganizationById,
   createOrganization,
   updateOrganization,
-  deleteOrganization
+  deleteOrganization,
+  // OpenAlex
+  getOpenAlexWorks,
+  getOpenAlexWorkById
 };
 
 export default api;
