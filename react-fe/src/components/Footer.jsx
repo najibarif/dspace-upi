@@ -1,5 +1,5 @@
 import logoUpi from "../assets/logo-upi.png";
-import logoLppm from "../assets/logo-lppm.png";
+import logoLppm from "../assets/lppm-logo.png";
 import { FaInstagram, FaYoutube } from "react-icons/fa";
 
 export default function Footer() {
@@ -7,39 +7,37 @@ export default function Footer() {
     <footer className='mt-12 bg-gray-50'>
       <div className='bg-[#808080] text-white py-8 sm:py-10 md:py-12'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='flex flex-col lg:flex-row gap-8 lg:gap-12'>
+          <div className='flex flex-col lg:flex-row gap-8 lg:gap-20'>
             {/* Logo Section */}
             <div className='flex-1 flex flex-col items-center lg:items-start mb-6 lg:mb-0'>
-              <div className='flex flex-col sm:flex-row items-center gap-6'>
-                <div className='relative h-16 w-32 flex items-center justify-center'>
-                  <img 
-                    src={logoUpi} 
+              <div className='flex flex-col sm:flex-row items-center gap-8'>
+                <div className='relative h-48 w-64 flex items-center justify-center'>
+                  <img
+                    src={logoUpi}
                     alt='UPI Logo'
-                    width={128}
-                    height={64}
+                    width={176}
+                    height={88}
                     loading='lazy'
                     decoding='async'
-                    className='h-auto w-full max-h-16 object-contain object-center filter contrast-110 transition-transform duration-300 hover:scale-105'
+                    className='h-auto w-full max-h-48 object-contain object-center filter contrast-110 transition-transform duration-300 hover:scale-105'
                     style={{ imageRendering: 'auto' }}
                   />
                 </div>
-                <div className='relative h-16 w-32 flex items-center justify-center'>
-                  <img 
-                    src={logoLppm} 
+                <div className='relative h-24 w-44 flex items-center justify-center'>
+                  <img
+                    src={logoLppm}
                     alt='LPPM Logo'
-                    width={128}
-                    height={64}
+                    width={176}
+                    height={88}
                     loading='lazy'
                     decoding='async'
-                    className='h-auto w-full max-h-16 object-contain object-center filter contrast-110 transition-transform duration-300 hover:scale-105'
+                    className='h-auto w-full max-h-48 object-contain object-center filter contrast-110 transition-transform duration-300 hover:scale-105'
                     style={{ imageRendering: 'auto' }}
                   />
                 </div>
               </div>
-              <p className='mt-4 text-sm text-gray-200 text-center lg:text-left max-w-xs'>
-                Lembaga Penelitian dan Pengabdian kepada Masyarakat
-              </p>
             </div>
+
 
             {/* Contact & Links Section */}
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full'>
@@ -115,7 +113,7 @@ export default function Footer() {
                     </a>
                   ))}
                 </div>
-                
+
                 <div className='pt-2'>
                   <p className='text-sm text-gray-300'>
                     Stay updated with our latest activities

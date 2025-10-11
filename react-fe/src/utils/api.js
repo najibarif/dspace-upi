@@ -89,7 +89,10 @@ const deleteOrganization = async (id) => {
 
 const openAlexApi = axios.create({
   baseURL: 'https://api.openalex.org',
-  timeout: 30000
+  timeout: 30000,
+  params: {
+    'mailto': 'your-email@example.com' // Required by OpenAlex for tracking
+  }
 });
 
 const OPENALEX_DEFAULT_PARAMS = {
@@ -149,6 +152,41 @@ const deleteSdg = async (id) => {
 };
 
 // Ekspor fungsi Laravel Papers
+// OpenAlex Organizations
+const getOpenAlexOrganizations = async ({ page = 1, perPage = 10, search = '', country = '' } = {}) => {
+  try {
+    const params = {
+      page,
+      per_page: perPage,
+      sort: 'display_name' // Default sort by name
+    };
+
+    // Add search query if provided
+    if (search) {
+      params.search = search;
+    }
+
+    // Add country filter if provided
+    if (country) {
+      params.filter = `country_code:${country.toLowerCase()}`;
+    }
+
+    const response = await openAlexApi.get('/institutions', { params });
+    return {
+      data: response.data.results,
+      meta: {
+        current_page: page,
+        per_page: perPage,
+        total: response.data.meta.count,
+        last_page: Math.ceil(response.data.meta.count / perPage)
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching OpenAlex organizations:', error);
+    throw error;
+  }
+};
+
 export {
   // Papper Laravel
   getPapers,

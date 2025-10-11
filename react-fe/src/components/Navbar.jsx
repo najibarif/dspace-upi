@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import logoUpi from "../assets/logo-upi.png";
-import logoLppm from "../assets/logo-lppm.png";
+import logoLppm from "../assets/lppm-logo.png";
 import { Link, useLocation } from "react-router-dom";
 import { FaBars, FaTimes, FaInstagram, FaYoutube } from "react-icons/fa";
 
@@ -230,13 +230,13 @@ export default function Navbar() {
       </motion.div>
 
       <div className='bg-[#D52727]'>
-        <div className='w-full px-4 md:px-24 py-3 flex items-center'>
+        <div className='w-full px-4 md:px-24 py-1 flex items-center'>
           <div className='flex-1 min-w-0 flex items-center gap-3'>
-            <img src={logoUpi} alt='Logo UPI' className='h-8 md:h-14 w-auto' />
+            <img src={logoUpi} alt='Logo UPI' className='h-6 md:h-10 w-auto' />
             <img
               src={logoLppm}
               alt='Logo LPPM'
-              className='h-6 md:h-11 w-auto'
+              className='h-10 md:h-20 w-auto'
             />
           </div>
 

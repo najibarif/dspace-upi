@@ -1,6 +1,6 @@
 export default function FindBanner() {
   return (
-    <section className='bg-[#F5F5F5] min-h-[250px] md:min-h-[300px] flex flex-col items-center justify-center pt-16 md:pt-24'>
+    <section className='bg-[#F5F5F5] min-h-[250px] md:min-h-[300px] flex flex-col items-center justify-center pt-16 md:pt-32'>
       <div className='text-center w-full max-w-4xl mx-auto px-4'>
         {/* Judul + Icon */}
         <h2 className='text-3xl md:text-4xl font-bold mb-6 md:mb-8 flex items-center justify-center gap-2'>

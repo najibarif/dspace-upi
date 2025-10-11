@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   PieChart,
   Pie,
@@ -14,41 +14,131 @@ import {
   Legend,
 } from "recharts";
 
+// Cache for storing API responses
+const apiCache = new Map();
+
+// Function to fetch with retry and backoff
+const fetchWithRetry = async (url, options = {}, retries = 3, backoff = 300) => {
+  try {
+    // Check cache first
+    if (apiCache.has(url)) {
+      return apiCache.get(url);
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
+        ...options.headers,
+      },
+    });
+
+    // Handle rate limiting (429)
+    if (response.status === 429) {
+      if (retries > 0) {
+        const retryAfter = response.headers.get('Retry-After') || backoff;
+        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+        return fetchWithRetry(url, options, retries - 1, backoff * 2);
+      }
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Cache the successful response
+    apiCache.set(url, data);
+    
+    return data;
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, backoff * 1000));
+      return fetchWithRetry(url, options, retries - 1, backoff * 2);
+    }
+    throw error;
+  }
+};
+
 export default function AuthorDetail() {
   const { id } = useParams();
   const [author, setAuthor] = useState(null);
   const [works, setWorks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [authorRes, worksRes] = await Promise.all([
-          fetch(`https://api.openalex.org/authors/${id}`),
-          fetch(`https://api.openalex.org/works?filter=author.id:${id}&per-page=200`),
-        ]);
+  const fetchAuthorData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [authorData, worksData] = await Promise.all([
+        fetchWithRetry(`https://api.openalex.org/authors/${id}`),
+        fetchWithRetry(`https://api.openalex.org/works?filter=author.id:${id}&per-page=200`)
+      ]);
 
-        if (!authorRes.ok || !worksRes.ok) throw new Error("Gagal memuat data");
-
-        const authorData = await authorRes.json();
-        const worksData = await worksRes.json();
-
-        setAuthor(authorData);
-        setWorks(worksData.results);
-      } catch (err) {
-        setError("Gagal memuat detail peneliti.");
-      } finally {
-        setLoading(false);
+      setAuthor(authorData);
+      setWorks(worksData.results || []);
+    } catch (err) {
+      console.error('Error fetching author data:', err);
+      setError(
+        err.message.includes('Rate limit')
+          ? 'Terlalu banyak permintaan. Silakan coba lagi nanti.'
+          : 'Gagal memuat detail peneliti. Pastikan koneksi internet Anda stabil.'
+      );
+      
+      // If rate limited, enable retry button
+      if (err.message.includes('Rate limit')) {
+        setRetryCount(prev => prev + 1);
       }
-    };
-    fetchData();
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
-  if (loading)
-    return <div className="text-center py-20 text-gray-500">Memuat data...</div>;
-  if (error)
-    return <div className="text-center py-20 text-red-600">{error}</div>;
+  useEffect(() => {
+    fetchAuthorData();
+  }, [fetchAuthorData, retryCount]);
+
+  if (loading) {
+    return (
+      <div className="text-center py-32">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600 mb-4"></div>
+        <p className="text-gray-600">Memuat data peneliti...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-20 px-4">
+        <div className="max-w-md mx-auto">
+          <div className="text-red-600 mb-4">
+            <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className="text-lg font-medium">{error}</p>
+          </div>
+          {error.includes('Terlalu banyak permintaan') && (
+            <button
+              onClick={() => {
+                setRetryCount(prev => prev + 1);
+                setError(null);
+                setLoading(true);
+              }}
+              className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            >
+              Coba Lagi
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const COLORS = [
     "#d52727",
@@ -102,7 +192,7 @@ export default function AuthorDetail() {
   ];
 
   return (
-    <div className="bg-gray-50 min-h-screen text-gray-800 mt-24">
+    <div className="bg-gray-50 min-h-screen text-gray-800 mt-0 md:mt-24">
       <div className="bg-gradient-to-r from-red-700 to-red-900 text-white py-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center gap-6">
           <img
