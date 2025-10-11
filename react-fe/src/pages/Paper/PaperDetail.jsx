@@ -295,7 +295,7 @@ export default function PaperDetail() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col mt-0 md:mt-24">
       {/* Header */}
       <div className="bg-[#D52727] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
