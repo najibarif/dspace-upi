@@ -13,7 +13,8 @@ import Outreach from "./pages/Outreach";
 import Thesis from "./pages/Thesis";
 import Equipments from "./pages/Equipments";
 import Organization from "./pages/Organization";
-import Profile from "./pages/Profile";
+import Profile from "./pages/profile/Profile";
+import ProfileDetail from "./pages/profile/ProfileDetail";
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
         <Route path='/organization/:id' element={<Organization />} />
         <Route path='/patent' element={<Patent />} />
         <Route path='/profiles' element={<Profile />} />
+        <Route path="/profile/:id" element={<ProfileDetail />} />
       </Routes>
 
       <Footer />
