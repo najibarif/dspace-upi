@@ -89,43 +89,60 @@ const deleteOrganization = async (id) => {
 
 const openAlexApi = axios.create({
   baseURL: 'https://api.openalex.org',
-  timeout: 30000,
-  params: {
-    'mailto': 'your-email@example.com' // Required by OpenAlex for tracking
-  }
+  timeout: 30000
 });
 
 const OPENALEX_DEFAULT_PARAMS = {
   mailto: 'naufalsidiq@upi.edu'
 };
 
-const getOpenAlexWorks = async ({ page = 1, perPage = 12, q = '', extraFilter = '' } = {}) => {
-  const filterParts = [`institutions.id:I130218214`];
-  if (extraFilter) filterParts.push(extraFilter);
-
-  const response = await openAlexApi.get('/works', {
+const getOpenAlexWorks = async ({ page = 1, perPage = 12, q = '', extraFilter = '', sort = 'year-desc' } = {}) => {
+  const response = await api.get('/openalex/works', {
     params: {
-      ...OPENALEX_DEFAULT_PARAMS,
       page,
       per_page: perPage,
       search: q || undefined,
-      filter: filterParts.join(',')
+      filter: extraFilter || undefined,
+      sort: sort || undefined
     }
   });
   return response.data;
 };
 
 const getOpenAlexWorkById = async (id) => {
-  const cleanId = (id || '').toString().includes('/') ? id : `works/${id}`;
-  const response = await openAlexApi.get(`/${cleanId.replace(/^\//, '')}`, {
+  const cleanId = (id || '').toString().includes('/') ? id.split('/').pop() : id;
+  const response = await api.get(`/openalex/works/${cleanId}`);
+  return response.data;
+};
+
+const getOpenAlexFilters = async ({ limit = 100, q = '', filter = '' } = {}) => {
+  const response = await api.get('/openalex/works/filters', { params: { limit, search: q || undefined, filter: filter || undefined } });
+  return response.data;
+};
+
+// ========== Authors (Laravel) ==========
+const getAuthors = async ({ q = '', sort = 'works_count', page = 1, perPage = 12 } = {}) => {
+  const response = await api.get('/authors', {
     params: {
-      ...OPENALEX_DEFAULT_PARAMS
+      q: q || undefined,
+      sort: sort || undefined,
+      page: page || undefined,
+      per_page: perPage || undefined
     }
   });
   return response.data;
 };
 
-// ========== SDGs (Laravel) ==========
+const getAuthorById = async (id) => {
+  const response = await api.get(`/authors/${id}`);
+  return response.data;
+};
+
+const getAuthorWorks = async (id, params = {}) => {
+  const response = await api.get(`/authors/${id}/works`, { params });
+  return response.data;
+};
+
 const getSdgs = async (params = {}) => {
   const response = await api.get('/sdgs', { params });
   return response.data;
@@ -151,42 +168,6 @@ const deleteSdg = async (id) => {
   return response.data;
 };
 
-// Ekspor fungsi Laravel Papers
-// OpenAlex Organizations
-const getOpenAlexOrganizations = async ({ page = 1, perPage = 10, search = '', country = '' } = {}) => {
-  try {
-    const params = {
-      page,
-      per_page: perPage,
-      sort: 'display_name' // Default sort by name
-    };
-
-    // Add search query if provided
-    if (search) {
-      params.search = search;
-    }
-
-    // Add country filter if provided
-    if (country) {
-      params.filter = `country_code:${country.toLowerCase()}`;
-    }
-
-    const response = await openAlexApi.get('/institutions', { params });
-    return {
-      data: response.data.results,
-      meta: {
-        current_page: page,
-        per_page: perPage,
-        total: response.data.meta.count,
-        last_page: Math.ceil(response.data.meta.count / perPage)
-      }
-    };
-  } catch (error) {
-    console.error('Error fetching OpenAlex organizations:', error);
-    throw error;
-  }
-};
-
 export {
   // Papper Laravel
   getPapers,
@@ -205,6 +186,11 @@ export {
   // OpenAlex
   getOpenAlexWorks,
   getOpenAlexWorkById,
+  getOpenAlexFilters,
+  // Authors
+  getAuthors,
+  getAuthorById,
+  getAuthorWorks,
   // SDGs
   getSdgs,
   getSdgById,

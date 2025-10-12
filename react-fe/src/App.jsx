@@ -24,9 +24,9 @@ import OrganizationDetail from "./pages/organization/OrganizationDetail";
 
 // Layout utama dengan Navbar & Footer
 const MainLayout = () => (
-  <div className="font-sans bg-white pt-[64px] md:pt-[80px] min-h-screen">
+  <div className='font-sans bg-white pt-[64px] md:pt-[80px] min-h-screen'>
     <Navbar />
-    <main className="min-h-[calc(100vh-64px)] flex flex-col">
+    <main className='min-h-[calc(100vh-64px)] flex flex-col'>
       <Outlet />
     </main>
     <Footer />
@@ -36,14 +36,14 @@ const MainLayout = () => (
 
 // Layout untuk halaman login tanpa Navbar & Footer
 const AuthLayout = () => (
-  <div className="font-sans min-h-screen">
+  <div className='font-sans min-h-screen'>
     <Outlet />
   </div>
 );
 
 export default function App() {
   return (
-    <div className="font-sans min-h-screen">
+    <div className='font-sans min-h-screen'>
       <Routes>
         {/* Routes with Main Layout (with Navbar & Footer) */}
         <Route element={<MainLayout />}>
@@ -52,7 +52,7 @@ export default function App() {
           <Route path='/paper' element={<Paper />} />
           <Route path='/paper/:id' element={<PaperDetail />} />
           <Route path='/project' element={<Project />} />
-          <Route path="/projects/:id" element={<DetailProject />} />
+          <Route path='/projects/:id' element={<DetailProject />} />
           <Route path='/patent' element={<Patent />} />
           <Route path='/outreach' element={<Outreach />} />
           <Route path='/outreach/:id' element={<OutreachDetail />} />
@@ -65,12 +65,12 @@ export default function App() {
           <Route path='/patent' element={<Patent />} />
           <Route path='/detailpatent/:id' element={<DetailPatent />} />
           <Route path='/profiles' element={<Profile />} />
-          <Route path="/profile/:id" element={<ProfileDetail />} />
+          <Route path='/profile/:id' element={<ProfileDetail />} />
         </Route>
 
         {/* Routes with Auth Layout (without Navbar & Footer) */}
         <Route element={<AuthLayout />}>
-          <Route path="/login" element={<Login />} />
+          <Route path='/login' element={<Login />} />
         </Route>
       </Routes>
     </div>

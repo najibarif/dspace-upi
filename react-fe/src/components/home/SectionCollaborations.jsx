@@ -3,8 +3,7 @@ import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
-const openAlexApiUrl =
-  "https://api.openalex.org/works?filter=institutions.id:i130218214&group_by=authorships.institutions.country_code";
+const openAlexApiUrl = "/api/collaborations";
 
 const countryCoordinates = {
   Indonesia: [113.92, -0.79],
@@ -156,24 +155,22 @@ export default function SectionCollaborations() {
 
         if (!alive) return;
 
-        const transformedData =
-          data.group_by
-            ?.map((item) => {
-              const countryName = item.key_display_name;
-              const coordinates = countryCoordinates[countryName];
+        const transformedData = data.group_by
+          ?.map((item) => {
+            const countryName = item.key_display_name;
+            const coordinates = countryCoordinates[countryName];
 
-              if (!coordinates) return null;
+            if (!coordinates) return null;
 
-              return {
-                name: countryName,
-                coordinates: coordinates,
-                profiles: Math.floor(item.count * 0.3),
-                outputs: item.count,
-              };
-            })
-            .filter((item) => item !== null)
-            .sort((a, b) => b.outputs - a.outputs)
-            .slice(0, 50) || [];
+            return {
+              name: countryName,
+              coordinates: coordinates,
+              profiles: Math.floor(item.count * 0.3),
+              outputs: item.count,
+            };
+          })
+          .filter((item) => item !== null)
+          .sort((a, b) => b.outputs - a.outputs);
 
         setCollaborations(transformedData);
       } catch (err) {

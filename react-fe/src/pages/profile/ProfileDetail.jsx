@@ -1,5 +1,6 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useParams, Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { getAuthorById, getAuthorWorks } from "../../utils/api";
 import {
   PieChart,
   Pie,
@@ -14,131 +15,40 @@ import {
   Legend,
 } from "recharts";
 
-// Cache for storing API responses
-const apiCache = new Map();
-
-// Function to fetch with retry and backoff
-const fetchWithRetry = async (url, options = {}, retries = 3, backoff = 300) => {
-  try {
-    // Check cache first
-    if (apiCache.has(url)) {
-      return apiCache.get(url);
-    }
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache',
-        ...options.headers,
-      },
-    });
-
-    // Handle rate limiting (429)
-    if (response.status === 429) {
-      if (retries > 0) {
-        const retryAfter = response.headers.get('Retry-After') || backoff;
-        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-        return fetchWithRetry(url, options, retries - 1, backoff * 2);
-      }
-      throw new Error('Rate limit exceeded. Please try again later.');
-    }
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    // Cache the successful response
-    apiCache.set(url, data);
-    
-    return data;
-  } catch (error) {
-    if (retries > 0) {
-      await new Promise(resolve => setTimeout(resolve, backoff * 1000));
-      return fetchWithRetry(url, options, retries - 1, backoff * 2);
-    }
-    throw error;
-  }
-};
-
 export default function AuthorDetail() {
   const { id } = useParams();
   const [author, setAuthor] = useState(null);
   const [works, setWorks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [retryCount, setRetryCount] = useState(0);
-
-  const fetchAuthorData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const [authorData, worksData] = await Promise.all([
-        fetchWithRetry(`https://api.openalex.org/authors/${id}`),
-        fetchWithRetry(`https://api.openalex.org/works?filter=author.id:${id}&per-page=200`)
-      ]);
-
-      setAuthor(authorData);
-      setWorks(worksData.results || []);
-    } catch (err) {
-      console.error('Error fetching author data:', err);
-      setError(
-        err.message.includes('Rate limit')
-          ? 'Terlalu banyak permintaan. Silakan coba lagi nanti.'
-          : 'Gagal memuat detail peneliti. Pastikan koneksi internet Anda stabil.'
-      );
-      
-      // If rate limited, enable retry button
-      if (err.message.includes('Rate limit')) {
-        setRetryCount(prev => prev + 1);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const [activeTab, setActiveTab] = useState("Overview");
+  const [paperPage, setPaperPage] = useState(1);
+  const perPagePaper = 12;
 
   useEffect(() => {
-    fetchAuthorData();
-  }, [fetchAuthorData, retryCount]);
+    const fetchData = async () => {
+      try {
+        const [authorData, worksPayload] = await Promise.all([
+          getAuthorById(id),
+          getAuthorWorks(id),
+        ]);
 
-  if (loading) {
-    return (
-      <div className="text-center py-32">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600 mb-4"></div>
-        <p className="text-gray-600">Memuat data peneliti...</p>
-      </div>
-    );
-  }
+        setAuthor(authorData);
+        setWorks(
+          Array.isArray(worksPayload?.results) ? worksPayload.results : []
+        );
+      } catch (err) {
+        setError("Gagal memuat detail peneliti.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
-  if (error) {
-    return (
-      <div className="text-center py-20 px-4">
-        <div className="max-w-md mx-auto">
-          <div className="text-red-600 mb-4">
-            <svg className="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <p className="text-lg font-medium">{error}</p>
-          </div>
-          {error.includes('Terlalu banyak permintaan') && (
-            <button
-              onClick={() => {
-                setRetryCount(prev => prev + 1);
-                setError(null);
-                setLoading(true);
-              }}
-              className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            >
-              Coba Lagi
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
+  // Pastikan semua Hooks dipanggil sebelum conditional return
+  const isLoading = loading;
+  const loadError = error;
 
   const COLORS = [
     "#d52727",
@@ -152,14 +62,14 @@ export default function AuthorDetail() {
   ];
 
   const researchData =
-    author.counts_by_year
+    author?.counts_by_year
       ?.map((y) => ({ year: y.year, count: y.works_count }))
-      .reverse() || [];
+      ?.reverse() || [];
 
   const citeData =
-    author.counts_by_year
+    author?.counts_by_year
       ?.map((y) => ({ year: y.year, count: y.cited_by_count }))
-      .reverse() || [];
+      ?.reverse() || [];
 
   const outreachData =
     works
@@ -173,10 +83,35 @@ export default function AuthorDetail() {
       }, [])
       .sort((a, b) => a.year - b.year) || [];
 
-  const sdgIcons = [1, 2, 3, 4, 6, 7, 9, 12, 13];
+  const sdgFromWorks = useMemo(() => {
+    const counts = new Map();
+    (works || []).forEach((w) => {
+      const sdgs = Array.isArray(w?.sustainable_development_goals)
+        ? w.sustainable_development_goals
+        : [];
+      sdgs.forEach((s) => {
+        const rawId = typeof s?.id === "string" ? s.id : "";
+        let num = null;
+        const m = rawId.match(/SDG[_\/:\-\s]*?(\d{1,2})/i);
+        if (m && m[1]) {
+          num = parseInt(m[1], 10);
+        }
+        if (!num && typeof s?.display_name === "string") {
+          const m2 = s.display_name.match(/^(\d{1,2})/);
+          if (m2 && m2[1]) num = parseInt(m2[1], 10);
+        }
+        if (num && num >= 1 && num <= 17) {
+          counts.set(num, (counts.get(num) || 0) + 1);
+        }
+      });
+    });
+    return Array.from(counts.entries())
+      .map(([num, count]) => ({ num, count }))
+      .sort((a, b) => b.count - a.count || a.num - b.num);
+  }, [works]);
 
   const conceptData =
-    author.x_concepts?.slice(0, 8).map((c) => ({
+    author?.x_concepts?.slice(0, 8).map((c) => ({
       name: c.display_name,
       value: c.score,
     })) || [];
@@ -191,112 +126,394 @@ export default function AuthorDetail() {
     { icon: "school", label: "Thesis" },
   ];
 
+  // Sorting dan pagination untuk tab Paper
+  const sortedWorks = useMemo(() => {
+    return [...(Array.isArray(works) ? works : [])].sort(
+      (a, b) => (b?.publication_year || 0) - (a?.publication_year || 0)
+    );
+  }, [works]);
+
+  const totalPaper = sortedWorks.length;
+  const totalPaperPages =
+    totalPaper > 0 ? Math.ceil(totalPaper / perPagePaper) : 0;
+  const safePaperPage = Math.min(
+    Math.max(paperPage, 1),
+    Math.max(totalPaperPages, 1)
+  );
+  const startPaperIndex =
+    totalPaper > 0 ? (safePaperPage - 1) * perPagePaper : 0;
+  const endPaperIndexExclusive = Math.min(
+    startPaperIndex + perPagePaper,
+    totalPaper
+  );
+  const visibleWorks = sortedWorks.slice(
+    startPaperIndex,
+    endPaperIndexExclusive
+  );
+
+  useEffect(() => {
+    // Reset ke halaman 1 saat author berubah atau data works berubah signifikan
+    setPaperPage(1);
+  }, [id]);
+
+  const pageNumbers = useMemo(() => {
+    const total = totalPaperPages || 0;
+    const current = safePaperPage || 1;
+    if (total <= 1) return [];
+    const delta = 2;
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+    if (current <= 2) end = Math.min(total, 1 + delta * 2);
+    if (current >= total - 1) start = Math.max(1, total - delta * 2);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [totalPaperPages, safePaperPage]);
+
+  if (isLoading)
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gray-50'>
+        <div className='text-center'>
+          <div className='inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600'></div>
+          <p className='mt-4 text-gray-600'>Loading profile...</p>
+        </div>
+      </div>
+    );
+  if (loadError)
+    return <div className='text-center py-20 text-red-600'>{loadError}</div>;
+
   return (
-    <div className="bg-gray-50 min-h-screen text-gray-800 mt-0 md:mt-24">
-      <div className="bg-gradient-to-r from-red-700 to-red-900 text-white py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center gap-6">
-          <img
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-              author.display_name
-            )}&background=ffffff&color=d52727`}
-            alt={author.display_name}
-            className="w-28 h-28 rounded-full border-4 border-white shadow-lg"
-          />
-          <div>
-            <h1 className="text-3xl font-semibold">{author.display_name}</h1>
-            <p className="mt-1 text-sm opacity-90">
-              {author.last_known_institutions
-                ?.map((i) => i.display_name)
-                .join(", ") || "Tidak ada afiliasi"}
-            </p>
-            <div className="flex gap-6 mt-4 text-sm">
-              <div>
-                <span className="text-2xl font-bold">
-                  {author.summary_stats?.h_index || 0}
+    <div className='bg-gray-50 min-h-screen text-gray-800 mt-24'>
+      <div className='bg-[#D52727] text-white'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8'>
+          <div className='mb-4'>
+            <Link
+              to='/profiles'
+              className='inline-flex items-center text-white/90 hover:text-white transition-colors text-sm sm:text-base'
+            >
+              <span className='material-symbols-outlined mr-1 sm:mr-2 text-lg sm:text-xl'>
+                arrow_back
+              </span>
+              Back to Profiles
+            </Link>
+          </div>
+
+          <div className='flex flex-col sm:flex-row items-center gap-6'>
+            <img
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                author.display_name
+              )}&background=ffffff&color=d52727`}
+              alt={author.display_name}
+              className='w-28 h-28 rounded-full border-4 border-white shadow-lg'
+            />
+            <div>
+              <h1 className='text-2xl sm:text-3xl md:text-4xl font-bold leading-tight'>
+                {author.display_name}
+              </h1>
+              <p className='mt-1 text-sm sm:text-base opacity-90'>
+                {author.last_known_institutions
+                  ?.map((i) => i.display_name)
+                  .join(", ") || "Tidak ada afiliasi"}
+              </p>
+              <div className='mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-white/90'>
+                <span className='inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-white/30'>
+                  <span className='material-symbols-outlined mr-1 sm:mr-2 text-sm'>
+                    equalizer
+                  </span>
+                  H-Index {author.summary_stats?.h_index || 0}
                 </span>
-                <p>H-Index</p>
-              </div>
-              <div>
-                <span className="text-2xl font-bold">{author.cited_by_count}</span>
-                <p>Cite</p>
+                <span className='inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-white/30'>
+                  <span className='material-symbols-outlined mr-1 sm:mr-2 text-sm'>
+                    star
+                  </span>
+                  Cited {author.cited_by_count || 0}
+                </span>
+                <span className='inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-white/30'>
+                  <span className='material-symbols-outlined mr-1 sm:mr-2 text-sm'>
+                    article
+                  </span>
+                  Works {author.works_count || 0}
+                </span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Navbar Tabs */}
-        <div className="max-w-6xl mx-auto mt-8 border-t border-red-400 pt-4 flex flex-wrap justify-between items-center text-sm">
-          <div className="flex flex-wrap gap-4 font-medium">
-            {tabItems.map((tab) => (
-              <button key={tab.label} className="hover:text-gray-100 flex items-center gap-1">
-                <span className="material-symbols-outlined">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
+          <div className='mt-6 border-t border-white/30 pt-4 flex flex-wrap justify-between items-center text-sm'>
+            <div className='flex flex-wrap gap-4 font-medium'>
+              {tabItems.map((tab) => (
+                <button
+                  key={tab.label}
+                  onClick={() => setActiveTab(tab.label)}
+                  className={`flex items-center gap-1 hover:text-gray-100 ${
+                    activeTab === tab.label ? "font-semibold" : ""
+                  }`}
+                >
+                  <span className='material-symbols-outlined'>{tab.icon}</span>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <input
-            type="text"
-            placeholder="Search here.."
-            className="bg-white text-gray-700 px-3 py-1.5 rounded-md border focus:outline-none focus:ring-2 focus:ring-red-500"
-          />
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto bg-white mt-8 rounded-xl shadow p-8">
-        <h2 className="font-semibold text-lg mb-3">Personal Profile</h2>
-        <p className="text-sm text-gray-700 mb-2">
-          <strong>Expertise related to UN Sustainable Development Goals</strong>
-        </p>
-        <p className="text-sm text-gray-600 mb-4">
-          In 2015, UN member states agreed to 17 global Sustainable Development
-          Goals (SDGs) to end poverty, protect the planet, and ensure prosperity
-          for all.
-        </p>
+      {activeTab === "Overview" && (
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8'>
+          <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6'>
+            <h2 className='font-semibold text-lg mb-3'>Personal Profile</h2>
+            <p className='text-sm text-gray-700 mb-2'>
+              <strong>
+                Expertise related to UN Sustainable Development Goals
+              </strong>
+            </p>
+            <p className='text-sm text-gray-600 mb-4'>
+              In 2015, UN member states agreed to 17 global Sustainable
+              Development Goals (SDGs) to end poverty, protect the planet, and
+              ensure prosperity for all.
+            </p>
 
-        <div className="flex flex-wrap gap-2 mb-8">
-          {sdgIcons.map((n) => {
-            const fileName = `E-WEB-Goal-${String(n).padStart(2, "0")} 1.png`;
-            const imageUrl = `http://127.0.0.1:8000/storage/sdgs/${encodeURIComponent(
-              fileName
-            )}`;
-            return (
-              <img key={n} src={imageUrl} alt={`SDG ${n}`} className="w-16 h-16 rounded-md" />
-            );
-          })}
-        </div>
+            {sdgFromWorks.length > 0 ? (
+              <div className='flex flex-wrap gap-3 mb-8'>
+                {sdgFromWorks.map(({ num, count }) => {
+                  const fileName = `E-WEB-Goal-${String(num).padStart(
+                    2,
+                    "0"
+                  )} 1.png`;
+                  const imageUrl = `http://127.0.0.1:8000/storage/sdgs/${encodeURIComponent(
+                    fileName
+                  )}`;
+                  return (
+                    <div key={num} className='relative'>
+                      <img
+                        src={imageUrl}
+                        alt={`SDG ${num}`}
+                        className='w-16 h-16 rounded-md'
+                      />
+                      <span className='absolute -top-2 -right-2 bg-red-700 text-white text-xs px-1.5 py-0.5 rounded-full'>
+                        {count}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className='text-sm text-gray-500 mb-8'>
+                Belum ada SDG terdeteksi dari karya.
+              </div>
+            )}
 
-        <h2 className="text-lg font-semibold mb-4">Concepts</h2>
-        <div className="w-full h-72 flex justify-center items-center">
-          <ResponsiveContainer width="60%" height="100%">
-            <PieChart>
-              <Pie
-                data={conceptData}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={100}
-                innerRadius={60}
-                paddingAngle={3}
-                label
-              >
-                {conceptData.map((_, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+            <h2 className='text-lg font-semibold mb-4'>Concepts</h2>
+            <div className='w-full h-72 flex justify-center items-center'>
+              <ResponsiveContainer width='60%' height='100%'>
+                <PieChart>
+                  <Pie
+                    data={conceptData}
+                    dataKey='value'
+                    nameKey='name'
+                    outerRadius={100}
+                    innerRadius={60}
+                    paddingAngle={3}
+                    label
+                  >
+                    {conceptData.map((_, index) => (
+                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
 
-        <div className="mt-10 space-y-10">
-          <BarSection title="Research Output" data={researchData} total={author.works_count} />
-          <BarSection title="Cite" data={citeData} total={author.cited_by_count} />
-          <BarSection
-            title="Outreach Output"
-            data={outreachData}
-            total={outreachData.reduce((a, b) => a + b.count, 0)}
-          />
+            <div className='mt-10 space-y-10'>
+              <BarSection
+                title='Research Output'
+                data={researchData}
+                total={author.works_count}
+              />
+              <BarSection
+                title='Cite'
+                data={citeData}
+                total={author.cited_by_count}
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {activeTab === "Paper" && (
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8'>
+          <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6'>
+            <h2 className='font-semibold text-lg mb-4'>Papers</h2>
+            {Array.isArray(visibleWorks) && visibleWorks.length > 0 ? (
+              <div className='space-y-4'>
+                {visibleWorks.map((w) => {
+                  const idStr = typeof w?.id === "string" ? w.id : "";
+                  const idShort = idStr.includes("/")
+                    ? idStr.split("/").pop()
+                    : idStr;
+                  const title = w?.display_name || "Untitled";
+                  const year = w?.publication_year
+                    ? String(w.publication_year)
+                    : "N/A";
+                  const venue =
+                    w?.host_venue?.display_name ||
+                    w?.primary_location?.source?.display_name ||
+                    "-";
+                  const authors = Array.isArray(w?.authorships)
+                    ? w.authorships
+                        .map((a) => a?.author?.display_name)
+                        .filter(Boolean)
+                        .join(", ")
+                    : "-";
+                  const insts = Array.isArray(w?.authorships)
+                    ? Array.from(
+                        new Set(
+                          w.authorships.flatMap((a) =>
+                            Array.isArray(a?.institutions)
+                              ? a.institutions
+                                  .map((i) => i?.display_name)
+                                  .filter(Boolean)
+                              : []
+                          )
+                        )
+                      ).join(", ")
+                    : "";
+                  const cited = Number(w?.cited_by_count || 0) || 0;
+                  const type = w?.type || "";
+                  return (
+                    <article
+                      key={idStr}
+                      className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200'
+                    >
+                      <div className='p-4 sm:p-6'>
+                        <div className='flex items-start justify-between'>
+                          <div className='flex-1 min-w-0'>
+                            <h2 className='text-base sm:text-lg font-semibold text-gray-900 mb-1 leading-tight'>
+                              <Link
+                                to={`/paper/${idShort}`}
+                                className='hover:text-[#d52727] transition-colors'
+                              >
+                                {title}
+                              </Link>
+                            </h2>
+                            <div className='mt-1 flex items-center text-xs text-gray-500'>
+                              <span className='flex items-center'>
+                                <span className='material-symbols-outlined text-sm mr-1'>
+                                  person
+                                </span>
+                                {authors || "Unknown author"}
+                              </span>
+                              <span className='mx-2'>•</span>
+                              <span>{year}</span>
+                            </div>
+                            {venue && (
+                              <p className='mt-2 text-sm text-gray-600 line-clamp-2'>
+                                <span className='font-medium'>
+                                  Published in:
+                                </span>{" "}
+                                {venue}
+                              </p>
+                            )}
+                            {insts && (
+                              <p className='mt-1 text-sm text-gray-600 line-clamp-1'>
+                                <span className='font-medium'>
+                                  Affiliation:
+                                </span>{" "}
+                                {insts}
+                              </p>
+                            )}
+                          </div>
+                          <div className='ml-4 flex-shrink-0'>
+                            <Link
+                              to={`/paper/${idShort}`}
+                              className='inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-[#d52727] bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
+                            >
+                              View Details
+                            </Link>
+                          </div>
+                        </div>
+                        <div className='mt-3 flex flex-wrap gap-2'>
+                          {type && (
+                            <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+                              {type}
+                            </span>
+                          )}
+                          <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700'>
+                            Cited by {cited}
+                          </span>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className='text-sm text-gray-500'>
+                Tidak ada karya yang ditemukan.
+              </div>
+            )}
+            {totalPaperPages > 1 && (
+              <div className='mt-8 flex flex-col sm:flex-row items-center justify-between bg-white rounded-lg border border-gray-200 p-4'>
+                <div className='mb-4 sm:mb-0'>
+                  <p className='text-sm text-gray-700'>
+                    Showing page{" "}
+                    <span className='font-medium'>{safePaperPage}</span> of{" "}
+                    <span className='font-medium'>{totalPaperPages}</span>
+                  </p>
+                </div>
+                <nav className='flex items-center space-x-2'>
+                  <button
+                    onClick={() => setPaperPage(Math.max(1, safePaperPage - 1))}
+                    disabled={safePaperPage <= 1}
+                    className={`relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 text-sm font-medium ${
+                      safePaperPage <= 1
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className='material-symbols-outlined text-base'>
+                      chevron_left
+                    </span>
+                    Previous
+                  </button>
+                  <div className='hidden sm:flex space-x-1'>
+                    {pageNumbers.map((pageNum) => {
+                      const isCurrent = pageNum === safePaperPage;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setPaperPage(pageNum)}
+                          className={`relative inline-flex items-center px-3 py-1.5 border text-sm font-medium ${
+                            isCurrent
+                              ? "z-10 bg-[#d52727] border-[#d52727] text-white"
+                              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() =>
+                      setPaperPage(Math.min(totalPaperPages, safePaperPage + 1))
+                    }
+                    disabled={safePaperPage >= totalPaperPages}
+                    className={`relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 text-sm font-medium ${
+                      safePaperPage >= totalPaperPages
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Next
+                    <span className='material-symbols-outlined text-base ml-1'>
+                      chevron_right
+                    </span>
+                  </button>
+                </nav>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -304,21 +521,21 @@ export default function AuthorDetail() {
 function BarSection({ title, data, total }) {
   return (
     <div>
-      <h3 className="font-semibold mb-2">{title}</h3>
-      <div className="flex justify-between items-end">
-        <ResponsiveContainer width="85%" height={200}>
+      <h3 className='font-semibold mb-2'>{title}</h3>
+      <div className='flex justify-between items-end'>
+        <ResponsiveContainer width='85%' height={200}>
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" />
+            <CartesianGrid strokeDasharray='3 3' />
+            <XAxis dataKey='year' />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="count" fill="#d52727" radius={[4, 4, 0, 0]} />
+            <Bar dataKey='count' fill='#d52727' radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-        <div className="text-right text-sm">
+        <div className='text-right text-sm'>
           <p>Total</p>
-          <p className="text-lg font-semibold">{total}</p>
+          <p className='text-lg font-semibold'>{total}</p>
         </div>
       </div>
     </div>
