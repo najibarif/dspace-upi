@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-export default function FindBanner() {
+export default function FindEquipments() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryParam = searchParams.get("q") || "";
   const [query, setQuery] = useState(queryParam);
@@ -43,15 +43,15 @@ export default function FindBanner() {
     <section className='bg-[#F5F5F5] min-h-[250px] md:min-h-[300px] flex flex-col items-center justify-center pt-16 md:pt-24'>
       <div className='text-center w-full max-w-4xl mx-auto px-4'>
         <h2 className='text-4xl font-bold mb-8 flex items-center justify-center gap-2'>
-          <span className='material-symbols-outlined !text-4xl'>public</span>
-          <span>Find Outreach</span>
+          <span className='material-symbols-outlined !text-4xl'>settings</span>
+          <span>Find Equipments</span>
         </h2>
 
         <div className='flex flex-col items-center gap-2 px-4'>
           <div className='w-full max-w-2xl flex rounded overflow-hidden border border-gray-300'>
             <input
               type='text'
-              placeholder='Find Outreach title'
+              placeholder='Find Equipment title'
               className='flex-1 px-4 py-3 outline-none'
               value={query}
               onChange={(e) => setQuery(e.target.value)}

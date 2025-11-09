@@ -11,7 +11,7 @@ function getSdgImageUrlByNumber(n) {
   if (!n) return null;
   const num = String(n).padStart(2, "0");
   const fileName = `E-WEB-Goal-${num} 1.png`;
-  return `http://127.0.0.1:8000/storage/sdgs/${encodeURIComponent(fileName)}`;
+  return `/storage/sdgs/${encodeURIComponent(fileName)}`;
 }
 
 const decodeAbstract = (abstractInvertedIndex) => {

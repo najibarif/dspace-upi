@@ -1,11 +1,15 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { FiFilter, FiChevronDown, FiChevronUp, FiExternalLink, FiChevronLeft, FiChevronRight, FiChevronsLeft } from "react-icons/fi";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import FindProject from "../../components/project/FindProject";
 
 const apiCache = new Map();
 
-const fetchWithRetry = async (url, options = {}, retries = 3, backoff = 300) => {
+const fetchWithRetry = async (
+  url,
+  options = {},
+  retries = 3,
+  backoff = 300
+) => {
   try {
     const cacheKey = `${url}-${JSON.stringify(options)}`;
     if (apiCache.has(cacheKey)) return apiCache.get(cacheKey);
@@ -13,14 +17,14 @@ const fetchWithRetry = async (url, options = {}, retries = 3, backoff = 300) => 
     const response = await fetch(url, {
       ...options,
       headers: {
-        'Accept': 'application/json',
+        Accept: "application/json",
         ...options.headers,
       },
     });
 
     if (!response.ok) {
       if (response.status === 429 && retries > 0) {
-        await new Promise(resolve => setTimeout(resolve, backoff));
+        await new Promise((resolve) => setTimeout(resolve, backoff));
         return fetchWithRetry(url, options, retries - 1, backoff * 2);
       }
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -31,7 +35,7 @@ const fetchWithRetry = async (url, options = {}, retries = 3, backoff = 300) => 
     return data;
   } catch (error) {
     if (retries > 0) {
-      await new Promise(resolve => setTimeout(resolve, backoff));
+      await new Promise((resolve) => setTimeout(resolve, backoff));
       return fetchWithRetry(url, options, retries - 1, backoff * 2);
     }
     throw error;
@@ -52,111 +56,106 @@ const Project = () => {
     sdg: [],
     type: [],
     concepts: [],
-    profile: []
+    profile: [],
   });
 
-  // Sidebar section component with show more/less functionality
-  const SidebarSection = ({ title, items, maxItems = 5 }) => {
+  const SidebarSection = ({ title, items, maxVisible = 5 }) => {
     const [showAll, setShowAll] = useState(false);
-    
+
     if (!items?.length) return null;
-    
-    const visibleItems = showAll ? items : items.slice(0, maxItems);
-    const hasMore = items.length > maxItems;
-    
+
+    const visibleItems = showAll ? items : items.slice(0, maxVisible);
+    const hasMore = items.length > maxVisible;
+
     return (
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-medium text-gray-900">{title}</h3>
-          {hasMore && (
-            <button
-              onClick={() => setShowAll(!showAll)}
-              className="text-xs text-red-600 hover:text-red-800 focus:outline-none"
-            >
-              {showAll ? 'Show Less' : `Show All (${items.length})`}
-            </button>
-          )}
-        </div>
-        <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+      <div className='mb-6'>
+        <h3 className='font-medium text-sm mb-2'>{title}</h3>
+        <div className='space-y-2 text-sm text-gray-600'>
           {visibleItems.map((item, index) => (
-            <div key={index} className="flex items-center justify-between py-1">
-              <label className="flex items-center space-x-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                />
-                <span className="truncate max-w-[180px]" title={item.name || item}>
-                  {item.name || item}
-                </span>
-              </label>
-              {item.count !== undefined && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full flex-shrink-0">
-                  {item.count}
-                </span>
+            <label
+              key={index}
+              className='flex items-center gap-2 cursor-pointer hover:text-[#d52727] transition-colors'
+            >
+              <input
+                type='checkbox'
+                className='rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]'
+              />
+              <span className='flex-1'>{item.name || item}</span>
+              {item.count != null && (
+                <span className='text-gray-500'>({item.count})</span>
               )}
-            </div>
+            </label>
           ))}
         </div>
+        {hasMore && (
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className='text-[#d52727] hover:text-[#b31f1f] text-sm mt-2 transition-colors flex items-center'
+          >
+            <span className='material-symbols-outlined text-base mr-1'>
+              {showAll ? "expand_less" : "expand_more"}
+            </span>
+            {showAll ? "Show less" : "See more"}
+          </button>
+        )}
       </div>
     );
   };
 
   const sortedProjects = useMemo(() => {
     return [...(projects || [])].sort((a, b) => {
-      return sortAsc 
-        ? a.title?.localeCompare(b.title || '') || 0
-        : b.title?.localeCompare(a.title || '') || 0;
+      return sortAsc
+        ? a.title?.localeCompare(b.title || "") || 0
+        : b.title?.localeCompare(a.title || "") || 0;
     });
   }, [projects, sortAsc]);
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      // First, let's verify the institution exists
-      const institutionUrl = 'https://api.openalex.org/institutions/ror:044b0xj37';
-      console.log('Fetching institution data from:', institutionUrl);
+      const institutionUrl =
+        "https://api.openalex.org/institutions/ror:044b0xj37";
+      console.log("Fetching institution data from:", institutionUrl);
       const institutionData = await fetchWithRetry(institutionUrl);
-      console.log('Institution data:', institutionData);
+      console.log("Institution data:", institutionData);
 
       if (!institutionData) {
-        throw new Error('Failed to fetch institution data');
+        throw new Error("Failed to fetch institution data");
       }
 
-      // Now fetch works for this institution
-      const apiUrl = new URL('https://api.openalex.org/works');
+      const apiUrl = new URL("https://api.openalex.org/works");
       const params = new URLSearchParams({
-        'filter': 'institutions.ror:044b0xj37',
-        'per-page': itemsPerPage,
-        'page': currentPage,
-        'sort': 'publication_year:desc',
+        filter: "institutions.ror:044b0xj37",
+        "per-page": itemsPerPage,
+        page: currentPage,
+        sort: "publication_year:desc",
       });
-      
+
       apiUrl.search = params.toString();
-      console.log('Fetching works from:', apiUrl.toString());
-      
+      console.log("Fetching works from:", apiUrl.toString());
+
       const data = await fetchWithRetry(apiUrl.toString());
-      console.log('API Response:', data);
+      console.log("API Response:", data);
 
       if (!data) throw new Error("No data received from API");
       if (!data.results) {
-        console.error('Unexpected API response structure:', data);
+        console.error("Unexpected API response structure:", data);
         throw new Error("Unexpected API response structure");
       }
 
       setTotalItems(data.meta?.count || 0);
-      console.log(`Found ${data.results.length} works, total: ${data.meta?.count || 0}`);
+      console.log(
+        `Found ${data.results.length} works, total: ${data.meta?.count || 0}`
+      );
 
-      // Initialize maps for sidebar data
       const sdgMap = {};
       const typeMap = {};
       const conceptsMap = {};
       const profileMap = {};
 
-      // Map the API response to your project structure
       const mappedProjects = data.results.map((p) => {
-        // Process concepts for sidebar
         (p.concepts || []).forEach((c) => {
           if (!c) return;
           const name = c.display_name || "";
@@ -167,55 +166,72 @@ const Project = () => {
           }
         });
 
-        // Count types for sidebar
-        const type = p.type || 'unknown';
+        const type = p.type || "unknown";
         typeMap[type] = (typeMap[type] || 0) + 1;
 
-        // Track lead profiles
-        const lead = p.authorships?.[0]?.author?.display_name || 
-                    (p.authorships?.[0]?.author ? `Author ID: ${p.authorships[0].author.id}` : "Unknown");
+        const lead =
+          p.authorships?.[0]?.author?.display_name ||
+          (p.authorships?.[0]?.author
+            ? `Author ID: ${p.authorships[0].author.id}`
+            : "Unknown");
         if (lead) {
           profileMap[lead] = (profileMap[lead] || 0) + 1;
         }
 
-        // Return the mapped project
         return {
-          id: p.id || '',
+          id: p.id || "",
           title: p.title || p.display_name || "Untitled Project",
           lead,
-          organization: institutionData.display_name || "Universitas Pendidikan Indonesia",
+          organization:
+            institutionData.display_name || "Universitas Pendidikan Indonesia",
           type,
-          duration: p.publication_year 
-            ? `${p.publication_year}` 
-            : (p.publication_date ? new Date(p.publication_date).getFullYear().toString() : "-"),
-          status: p.is_retracted ? "Retracted" : (p.is_paratext ? "Paratext" : "Published"),
+          duration: p.publication_year
+            ? `${p.publication_year}`
+            : p.publication_date
+            ? new Date(p.publication_date).getFullYear().toString()
+            : "-",
+          status: p.is_retracted
+            ? "Retracted"
+            : p.is_paratext
+            ? "Paratext"
+            : "Published",
           openalex_url: p.id ? p.id.replace("https://openalex.org/", "") : "",
-          concepts: p.concepts?.map(c => c.display_name).filter(Boolean) || [],
+          concepts:
+            p.concepts?.map((c) => c.display_name).filter(Boolean) || [],
           doi: p.doi || "",
-          abstract: p.abstract || ""
+          abstract: p.abstract || "",
         };
       });
 
-      console.log('Mapped projects:', mappedProjects);
+      console.log("Mapped projects:", mappedProjects);
       setProjects(mappedProjects);
-      setError(mappedProjects.length === 0 ? 'No projects found. Try adjusting your search criteria.' : null);
+      setError(
+        mappedProjects.length === 0
+          ? "No projects found. Try adjusting your search criteria."
+          : null
+      );
 
-      // Update sidebar data
       setSidebarData({
         sdg: Object.entries(sdgMap).map(([name, count]) => ({ name, count })),
         type: Object.entries(typeMap).map(([name, count]) => ({ name, count })),
-        concepts: Object.entries(conceptsMap).map(([name, count]) => ({ name, count })),
-        profile: Object.entries(profileMap).map(([name, count]) => ({ name, count }))
+        concepts: Object.entries(conceptsMap).map(([name, count]) => ({
+          name,
+          count,
+        })),
+        profile: Object.entries(profileMap).map(([name, count]) => ({
+          name,
+          count,
+        })),
       });
 
-      console.log('Sidebar data updated:', {
+      console.log("Sidebar data updated:", {
         sdg: Object.entries(sdgMap).length,
         type: Object.entries(typeMap).length,
         concepts: Object.entries(conceptsMap).length,
-        profile: Object.entries(profileMap).length
+        profile: Object.entries(profileMap).length,
       });
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error("Error fetching projects:", error);
       setError(
         error.message.includes("Rate limit")
           ? "Terlalu banyak permintaan. Silakan coba lagi nanti."
@@ -233,212 +249,259 @@ const Project = () => {
     fetchProjects();
   }, [fetchProjects, retryCount]);
 
-
   return (
-    <section className="bg-gray-50 min-h-screen">
+    <section className='bg-gray-50 min-h-screen'>
       <FindProject />
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 py-10">
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
-        <div className="md:hidden mb-4">
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
+        <div className='md:hidden mb-4'>
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] transition"
+            className='flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors w-full justify-center'
           >
-            <span className="material-symbols-outlined text-lg">filter_alt</span>
+            <span className='material-symbols-outlined text-lg'>
+              filter_alt
+            </span>
             {showMobileFilters ? "Hide Filters" : "Show Filters"}
           </button>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar */}
+        <div className='flex flex-col md:flex-row gap-6 lg:gap-8'>
           <aside
-            className={`${showMobileFilters ? "block" : "hidden"
-              } md:block w-full md:w-64 bg-white shadow-md rounded-xl p-5 h-fit`}
+            className={`${
+              showMobileFilters ? "block" : "hidden"
+            } md:block w-full md:w-64 bg-white shadow-sm rounded-md p-4 h-fit`}
           >
-            <div className="mb-5">
-              <h3 className="font-semibold text-gray-800 text-sm mb-2">
-                Sort by
-              </h3>
+            <h2 className='font-semibold mb-4'>Filters for Project</h2>
+
+            <div className='mb-4'>
+              <h4 className='font-medium text-sm mb-2'>Sort By</h4>
               <select
-                className="w-full border border-gray-300 p-2 rounded-md text-sm focus:ring-[#d52727] focus:border-[#d52727]"
+                className='w-full border border-gray-300 p-2 rounded text-sm focus:border-[#d52727] focus:ring-1 focus:ring-[#d52727]'
                 value={sortAsc ? "asc" : "desc"}
                 onChange={(e) => setSortAsc(e.target.value === "asc")}
               >
-                <option value="asc">Title (A–Z)</option>
-                <option value="desc">Title (Z–A)</option>
+                <option value='asc'>Title (A–Z)</option>
+                <option value='desc'>Title (Z–A)</option>
               </select>
             </div>
 
-            <SidebarSection title="Sustainable Development Goals" items={sidebarData.sdg} />
-            <SidebarSection title="Concepts" items={sidebarData.concepts} />
-            <SidebarSection title="Profile" items={sidebarData.profile} />
-            <SidebarSection title="Type" items={sidebarData.type} />
+            <SidebarSection
+              title='Sustainable Development Goals'
+              items={sidebarData.sdg}
+            />
+            <SidebarSection title='Concepts' items={sidebarData.concepts} />
+            <SidebarSection title='Profile' items={sidebarData.profile} />
+            <SidebarSection title='Type' items={sidebarData.type} />
           </aside>
 
-          {/* Main Content */}
-          <main className="flex-1">
+          <main className='flex-1'>
             <div className='flex items-center justify-between border-b pb-3 mb-6'>
               <p className='text-sm text-gray-600'>
                 Showing {projects.length} of {totalItems} results
               </p>
-              <button
-                type="button"
-                className='text-sm text-[#d52727] hover:text-[#b31f1f] flex items-center gap-1 transition-colors'
-                onClick={() => setSortAsc((v) => !v)}
+              <select
+                className='border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-[#d52727] focus:border-[#d52727]'
+                value={sortAsc ? "asc" : "desc"}
+                onChange={(e) => setSortAsc(e.target.value === "asc")}
               >
-                <span className='material-symbols-outlined text-base'>
-                  {sortAsc ? 'arrow_upward' : 'arrow_downward'}
-                </span>
-                Sort {sortAsc ? 'A-Z' : 'Z-A'}
-              </button>
+                <option value='asc'>Title (A–Z)</option>
+                <option value='desc'>Title (Z–A)</option>
+              </select>
             </div>
+
             {loading ? (
-              <div className='text-center py-12'><div className='inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#d52727]'></div><p className='mt-3 text-sm text-gray-600'>Memuat data organisasi...</p></div>
+              <div className='text-center py-10'>
+                <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#d52727]'></div>
+                <p className='mt-2 text-sm text-gray-600'>
+                  Loading projects...
+                </p>
+              </div>
             ) : error ? (
-              <div className="text-center py-20">
-                <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
-                  <div className="text-[#d52727] mb-3">
-                    <svg
-                      className="w-12 h-12 mx-auto mb-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
-                    <p className="font-medium text-lg">{error}</p>
+              <div className='bg-red-50 border-l-4 border-red-500 p-4 mb-6'>
+                <div className='flex'>
+                  <div className='flex-shrink-0'>
+                    <span className='material-symbols-outlined text-red-500'>
+                      error
+                    </span>
                   </div>
-                  {error.includes("Terlalu banyak permintaan") && (
-                    <button
-                      onClick={() => {
-                        setRetryCount((prev) => prev + 1);
-                        setError(null);
-                      }}
-                      className="mt-4 px-5 py-2 bg-[#d52727] text-white rounded-md hover:bg-[#b31f1f] transition"
-                    >
-                      Coba Lagi
-                    </button>
-                  )}
+                  <div className='ml-3'>
+                    <p className='text-sm text-red-700'>{error}</p>
+                    {error.includes("Terlalu banyak permintaan") && (
+                      <button
+                        onClick={() => {
+                          setRetryCount((prev) => prev + 1);
+                          setError(null);
+                        }}
+                        className='mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-[#d52727] hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
+                      >
+                        Coba Lagi
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
+            ) : sortedProjects.length === 0 ? (
+              <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center'>
+                <span className='material-symbols-outlined text-gray-400 text-4xl mb-2'>
+                  search_off
+                </span>
+                <h3 className='text-lg font-medium text-gray-900 mb-1'>
+                  No projects found
+                </h3>
+                <p className='text-gray-500 text-sm'>
+                  Try adjusting your search or filter criteria
+                </p>
+              </div>
             ) : (
-              <div className="space-y-5">
-                {sortedProjects.length === 0 ? (
-                  <div className="text-center text-gray-500 py-10">
-                    Tidak ada proyek yang ditemukan.
-                  </div>
-                ) : (
-                  sortedProjects.map((project, idx) => (
-                    <Link
-                      key={idx}
-                      to={`/projects/${project.openalex_url}`}
-                      className="block bg-white rounded-xl shadow hover:shadow-lg transition p-6 border border-gray-100"
-                    >
-                      <h2 className="font-semibold text-lg text-gray-900 mb-1">
-                        {project.title}
-                      </h2>
-                      <p className="text-sm text-gray-600 mb-1">
-                        <span className="font-medium">Lead:</span> {project.lead}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Organization:</span>{" "}
-                        {project.organization}
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
-                        <span className="bg-gray-100 px-2 py-1 rounded">
-                          {project.type}
-                        </span>
-                        <span className="bg-gray-100 px-2 py-1 rounded">
-                          {project.duration}
-                        </span>
-                        <span className="bg-gray-100 px-2 py-1 rounded">
-                          {project.status}
-                        </span>
+              <div className='space-y-4'>
+                {sortedProjects.map((project, idx) => (
+                  <article
+                    key={idx}
+                    className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200'
+                  >
+                    <div className='p-4 sm:p-6'>
+                      <div className='flex items-start justify-between'>
+                        <div className='flex-1 min-w-0'>
+                          <h2 className='text-base sm:text-lg font-semibold text-gray-900 mb-1 leading-tight'>
+                            <Link
+                              to={`/projects/${project.openalex_url}`}
+                              className='hover:text-[#d52727] transition-colors'
+                            >
+                              {project.title}
+                            </Link>
+                          </h2>
+
+                          <div className='mt-1 flex items-center text-xs text-gray-500'>
+                            <span className='flex items-center'>
+                              <span className='material-symbols-outlined text-sm mr-1'>
+                                person
+                              </span>
+                              {project.lead}
+                            </span>
+                            <span className='mx-2'>•</span>
+                            <span>{project.duration}</span>
+                          </div>
+
+                          {project.organization && (
+                            <p className='mt-1 text-sm text-gray-600'>
+                              <span className='font-medium'>Organization:</span>{" "}
+                              {project.organization}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className='ml-4 flex-shrink-0'>
+                          <Link
+                            to={`/projects/${project.openalex_url}`}
+                            className='inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-[#d52727] bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
+                          >
+                            View Details
+                          </Link>
+                        </div>
                       </div>
-                    </Link>
-                  ))
-                )}
+
+                      <div className='mt-3 flex flex-wrap gap-2'>
+                        {project.type && (
+                          <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+                            {project.type}
+                          </span>
+                        )}
+                        {project.status && (
+                          <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+                            {project.status}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ))}
               </div>
             )}
-            <div className='flex items-center justify-center mt-6'>
-              <div className='flex items-center space-x-1'>
-                <button
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                  className='p-2 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50 hidden sm:inline-flex'
-                  aria-label='First page'
-                >
-                  <FiChevronsLeft className='h-4 w-4' />
-                </button>
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className='p-2 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50'
-                  aria-label='Previous page'
-                >
-                  <FiChevronLeft className='h-4 w-4' />
-                </button>
+            {projects.length > 0 && (
+              <div className='mt-8 flex flex-col sm:flex-row items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4'>
+                <div className='mb-4 sm:mb-0'>
+                  <p className='text-sm text-gray-700'>
+                    Showing page{" "}
+                    <span className='font-medium'>{currentPage}</span> of{" "}
+                    <span className='font-medium'>
+                      {Math.ceil(totalItems / itemsPerPage)}
+                    </span>
+                  </p>
+                </div>
+                <nav className='flex items-center space-x-2'>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={currentPage === 1}
+                    className={`relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 text-sm font-medium ${
+                      currentPage === 1
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className='material-symbols-outlined text-base'>
+                      chevron_left
+                    </span>
+                    Previous
+                  </button>
 
-                {currentPage > 2 && (
-                  <>
-                    <button
-                      onClick={() => setCurrentPage(1)}
-                      className='min-w-[40px] h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-gray-100'
-                    >
-                      1
-                    </button>
-                    {currentPage > 3 && <span className='px-1 text-gray-500'>...</span>}
-                  </>
-                )}
+                  <div className='hidden sm:flex space-x-1'>
+                    {currentPage > 2 && (
+                      <>
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          className='relative inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium bg-white text-gray-700 hover:bg-gray-50'
+                        >
+                          1
+                        </button>
+                        {currentPage > 3 && (
+                          <span className='px-1 text-gray-500'>...</span>
+                        )}
+                      </>
+                    )}
 
-                {[
-                  currentPage - 1,
-                  currentPage,
-                  currentPage + 1
-                ]
-                  .filter(page => page >= 1)
-                  .map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`min-w-[40px] h-10 rounded-md flex items-center justify-center text-sm ${currentPage === page
-                          ? 'bg-red-600 text-white font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      aria-current={currentPage === page ? 'page' : undefined}
-                    >
-                      {page}
-                    </button>
-                  ))}
+                    {[currentPage - 1, currentPage, currentPage + 1]
+                      .filter(
+                        (page) =>
+                          page >= 1 &&
+                          page <= Math.ceil(totalItems / itemsPerPage)
+                      )
+                      .map((page) => {
+                        const isCurrent = page === currentPage;
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`relative inline-flex items-center px-3 py-1.5 border text-sm font-medium ${
+                              isCurrent
+                                ? "z-10 bg-[#d52727] border-[#d52727] text-white"
+                                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      })}
+                  </div>
 
-                <button
-                  onClick={() => setCurrentPage(prev => prev + 1)}
-                  disabled={projects.length < itemsPerPage}
-                  className='p-2 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50'
-                  aria-label='Next page'
-                >
-                  <FiChevronRight className='h-4 w-4' />
-                </button>
+                  <button
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                    disabled={projects.length < itemsPerPage}
+                    className={`relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 text-sm font-medium ${
+                      projects.length < itemsPerPage
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Next
+                    <span className='material-symbols-outlined text-base ml-1'>
+                      chevron_right
+                    </span>
+                  </button>
+                </nav>
               </div>
-            </div>
+            )}
           </main>
         </div>
       </div>

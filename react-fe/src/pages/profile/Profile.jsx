@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import FindProfiles from "../../components/profiles/FindProfiles";
 
 const stringToColor = (string) => {
@@ -34,8 +34,7 @@ const countryOptions = [
 ];
 
 export default function Profile() {
-  const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedSdgs, setSelectedSdgs] = useState([]);
   const [selectedConcepts, setSelectedConcepts] = useState([]);
   const [selectedCountries, setSelectedCountries] = useState([]);
@@ -48,6 +47,7 @@ export default function Profile() {
     per_page: 100,
     total_pages: 0,
   });
+  const [sortBy, setSortBy] = useState("");
 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
@@ -56,16 +56,20 @@ export default function Profile() {
       try {
         setLoading(true);
         setError(null);
+        const q = searchParams.get("q") || "";
+        const page = Number(searchParams.get("page") || 1);
+        const sort = searchParams.get("sort") || "";
+
         const apiUrl = `/api/authors?${new URLSearchParams({
-          q: query,
+          q: q,
           sort:
-            sortBy === "name"
+            sort === "name"
               ? "name"
-              : sortBy === "hIndex"
+              : sort === "hIndex"
               ? "hIndex"
               : "works_count",
-          per_page: 12, // Match Paper.jsx pagination
-          page: meta.page,
+          per_page: 12,
+          page: page,
         })}`;
 
         const response = await fetch(apiUrl, {
@@ -90,10 +94,9 @@ export default function Profile() {
           }))
         );
 
-        // Update pagination meta
         const total = Number(data?.meta?.count || 0);
         const per = Number(data?.meta?.per_page || 12);
-        const current = Number(data?.meta?.current_page || meta.page);
+        const current = Number(data?.meta?.page || page || 1);
         const totalPages = total > 0 && per > 0 ? Math.ceil(total / per) : 0;
         setMeta({
           count: total,
@@ -102,24 +105,22 @@ export default function Profile() {
           total_pages: totalPages,
         });
       } catch (e) {
-        setError(
-          "Gagal memuat data peneliti. Silakan coba beberapa saat lagi."
-        );
+        setError("Failed to load researcher data. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
-    const timer = setTimeout(fetchAuthors, 400);
-    return () => clearTimeout(timer);
-  }, [query, sortBy, meta.page]);
+    fetchAuthors();
+  }, [searchParams]);
 
-  // Pagination functions
   const goToPage = (p) => {
     const max = meta.total_pages || 0;
     if (p < 1) p = 1;
     if (max && p > max) p = max;
-    setMeta((prev) => ({ ...prev, page: p }));
+    const params = new URLSearchParams(searchParams);
+    params.set("page", String(p));
+    setSearchParams(params);
   };
 
   const pageNumbers = useMemo(() => {
@@ -134,11 +135,6 @@ export default function Profile() {
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }, [meta.total_pages, meta.page]);
 
-  // Reset to page 1 when query or sort changes
-  useEffect(() => {
-    setMeta((prev) => ({ ...prev, page: 1 }));
-  }, [query, sortBy]);
-
   const perPage = Number(meta.per_page) || 0;
   const startIndex =
     authors.length > 0 ? (meta.page - 1) * (perPage || authors.length) + 1 : 0;
@@ -152,98 +148,134 @@ export default function Profile() {
 
   return (
     <div className='bg-gray-50 min-h-screen'>
-      <FindProfiles query={query} setQuery={setQuery} />
+      <FindProfiles />
 
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-8'>
-        {/* Mobile Filter Button */}
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
         <div className='md:hidden mb-4'>
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className='flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
+            className='flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors w-full justify-center'
           >
-            <span className='material-symbols-outlined mr-1 sm:mr-2 text-lg sm:text-xl'>
+            <span className='material-symbols-outlined text-lg'>
               filter_alt
             </span>
             {showMobileFilters ? "Hide Filters" : "Show Filters"}
           </button>
         </div>
 
-        <div className='flex flex-col md:flex-row gap-8'>
-          {/* Sidebar */}
+        <div className='flex flex-col md:flex-row gap-6 lg:gap-8'>
           <aside
-            className={`md:w-64 w-full bg-white rounded-xl shadow-sm border border-gray-100 p-5 h-fit
-            ${showMobileFilters ? "block mb-4" : "hidden md:block"}`}
+            className={`${
+              showMobileFilters ? "block" : "hidden"
+            } md:block w-full md:w-64 bg-white shadow-sm rounded-md p-4 h-fit`}
           >
-            <h3 className='font-semibold text-lg mb-4 text-gray-800'>
-              Filter Authors
-            </h3>
-            <div className='space-y-6 text-sm text-gray-700'>
-              {[
-                ["SDGs", sdgOptions, selectedSdgs, setSelectedSdgs],
-                [
-                  "Concepts",
-                  conceptOptions,
-                  selectedConcepts,
-                  setSelectedConcepts,
-                ],
-                [
-                  "Countries",
-                  countryOptions,
-                  selectedCountries,
-                  setSelectedCountries,
-                ],
-              ].map(([title, options, selected, setSelected], i) => (
-                <div key={i}>
-                  <h4 className='font-medium mb-2'>{title}</h4>
-                  <ul className='space-y-1'>
-                    {options.map((opt) => (
-                      <li key={opt.id}>
-                        <label className='flex items-center gap-2 cursor-pointer'>
-                          <input
-                            type='checkbox'
-                            checked={selected.includes(opt.id)}
-                            onChange={(e) =>
-                              e.target.checked
-                                ? setSelected([...selected, opt.id])
-                                : setSelected(
-                                    selected.filter((id) => id !== opt.id)
-                                  )
-                            }
-                            className='text-[#d52727] rounded'
-                          />
-                          <span>{opt.name}</span>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+            <h2 className='font-semibold mb-4'>Filters for Authors</h2>
+
+            <div className='mb-4'>
+              <h4 className='font-medium text-sm mb-2'>Sort By</h4>
+              <select
+                className='w-full border border-gray-300 p-2 rounded text-sm focus:border-[#d52727] focus:ring-1 focus:ring-[#d52727]'
+                value={searchParams.get("sort") || sortBy}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSortBy(val);
+                  const params = new URLSearchParams(searchParams);
+                  if (val) params.set("sort", val);
+                  else params.delete("sort");
+                  params.set("page", "1");
+                  setSearchParams(params);
+                }}
+              >
+                <option value=''>Default</option>
+                <option value='name'>Name (A-Z)</option>
+                <option value='hIndex'>H-Index (Highest)</option>
+              </select>
             </div>
+            {[
+              ["SDGs", sdgOptions, selectedSdgs, setSelectedSdgs],
+              [
+                "Concepts",
+                conceptOptions,
+                selectedConcepts,
+                setSelectedConcepts,
+              ],
+              [
+                "Countries",
+                countryOptions,
+                selectedCountries,
+                setSelectedCountries,
+              ],
+            ].map(([title, options, selected, setSelected], i) => (
+              <div key={i} className='mb-6'>
+                <h3 className='font-medium text-sm mb-2'>{title}</h3>
+                <div className='space-y-2 text-sm text-gray-600'>
+                  {options.map((opt) => (
+                    <label key={opt.id} className='flex items-center gap-2'>
+                      <input
+                        type='checkbox'
+                        checked={selected.includes(opt.id)}
+                        onChange={(e) =>
+                          e.target.checked
+                            ? setSelected([...selected, opt.id])
+                            : setSelected(
+                                selected.filter((id) => id !== opt.id)
+                              )
+                        }
+                        className='rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]'
+                      />
+                      <span className='flex-1'>{opt.name}</span>
+                      {opt.count != null && (
+                        <span className='text-gray-500'>({opt.count})</span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
           </aside>
 
-          {/* Main Content */}
-          <main className='flex-1 max-w-3xl'>
-            <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b pb-3'>
+          <main className='flex-1'>
+            <div className='flex items-center justify-between border-b pb-3 mb-6'>
               <p className='text-sm text-gray-600'>
-                Menampilkan {startIndex}-{endIndex} dari {meta.count} hasil
+                Showing {startIndex}-{endIndex} of {meta.count} results
               </p>
               <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
                 className='border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-[#d52727] focus:border-[#d52727]'
+                value={searchParams.get("sort") || sortBy}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSortBy(val);
+                  const params = new URLSearchParams(searchParams);
+                  if (val) params.set("sort", val);
+                  else params.delete("sort");
+                  params.set("page", "1");
+                  setSearchParams(params);
+                }}
               >
-                <option value=''>Urutkan</option>
-                <option value='name'>Nama (A-Z)</option>
-                <option value='hIndex'>H-Index (Tertinggi)</option>
+                <option value=''>Default</option>
+                <option value='name'>Name (A-Z)</option>
+                <option value='hIndex'>H-Index (Highest)</option>
               </select>
             </div>
 
             {loading ? (
-              <div className='flex justify-center items-center h-60'>
-                <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#d52727]'></div>
+              <div className='text-center py-10'>
+                <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#d52727]'></div>
+                <p className='mt-2 text-sm text-gray-600'>Loading authors...</p>
               </div>
             ) : error ? (
-              <div className='text-center text-red-600 py-8'>{error}</div>
+              <div className='bg-red-50 border-l-4 border-red-500 p-4 mb-6'>
+                <div className='flex'>
+                  <div className='flex-shrink-0'>
+                    <span className='material-symbols-outlined text-red-500'>
+                      error
+                    </span>
+                  </div>
+                  <div className='ml-3'>
+                    <p className='text-sm text-red-700'>{error}</p>
+                  </div>
+                </div>
+              </div>
             ) : authors.length === 0 ? (
               <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center'>
                 <span className='material-symbols-outlined text-gray-400 text-4xl mb-2'>
@@ -324,7 +356,6 @@ export default function Profile() {
                   </article>
                 ))}
 
-                {/* Pagination */}
                 {meta.total_pages > 1 && (
                   <div className='mt-8 flex flex-col sm:flex-row items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4'>
                     <div className='mb-4 sm:mb-0'>

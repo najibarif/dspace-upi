@@ -1,42 +1,44 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FiChevronLeft, FiChevronRight, FiChevronsLeft } from "react-icons/fi";
 import FindPatent from "../../components/patent/FindPatent";
 
-function SidebarSection({ title, items }) {
+function SidebarSection({ title, items, maxVisible = 5 }) {
   const [showAll, setShowAll] = useState(false);
-  const visibleItems = showAll ? items : items.slice(0, 5);
+
+  if (!items?.length) return null;
+
+  const visibleItems = showAll ? items : items.slice(0, maxVisible);
+  const hasMore = items.length > maxVisible;
 
   return (
-    <div className="mb-6">
-      <h3 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">
-        {title}
-      </h3>
-      <div className="space-y-2 text-sm text-gray-600">
+    <div className='mb-6'>
+      <h3 className='font-medium text-sm mb-2'>{title}</h3>
+      <div className='space-y-2 text-sm text-gray-600'>
         {visibleItems.map((item, idx) => (
           <label
             key={idx}
-            className="flex items-center justify-between cursor-pointer hover:text-[#d52727]"
+            className='flex items-center gap-2 cursor-pointer hover:text-[#d52727] transition-colors'
           >
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                className="rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]"
-              />
-              <span>{item.name}</span>
-            </div>
-            {item.count && (
-              <span className="text-gray-400 text-xs">({item.count})</span>
+            <input
+              type='checkbox'
+              className='rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]'
+            />
+            <span className='flex-1'>{item.name}</span>
+            {item.count != null && (
+              <span className='text-gray-500'>({item.count})</span>
             )}
           </label>
         ))}
       </div>
-      {items.length > 5 && (
+      {hasMore && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="text-[#d52727] text-sm font-medium mt-2 hover:underline"
+          className='text-[#d52727] hover:text-[#b31f1f] text-sm mt-2 transition-colors flex items-center'
         >
-          {showAll ? "Show less" : "See more >"}
+          <span className='material-symbols-outlined text-base mr-1'>
+            {showAll ? "expand_less" : "expand_more"}
+          </span>
+          {showAll ? "Show less" : "See more"}
         </button>
       )}
     </div>
@@ -63,10 +65,10 @@ export default function Patent() {
       try {
         const response = await fetch(
           "https://api.openalex.org/works?" +
-          "search=patent&" +
-          "filter=institutions.ror:044b0xj37&" +
-          "sort=relevance_score:desc,publication_date:desc&" +
-          "per-page=20"
+            "search=patent&" +
+            "filter=institutions.ror:044b0xj37&" +
+            "sort=relevance_score:desc,publication_date:desc&" +
+            "per-page=20"
         );
         const data = await response.json();
         setTotalResults(data.meta?.count || 0);
@@ -137,177 +139,240 @@ export default function Patent() {
   }, [sortAsc, patents]);
 
   return (
-    <section className="bg-gray-50 min-h-screen">
+    <section className='bg-gray-50 min-h-screen'>
       <FindPatent />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-8">
-        {/* Mobile filter toggle */}
-        <div className="md:hidden mb-5">
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
+        <div className='md:hidden mb-4'>
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] transition"
+            className='flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors w-full justify-center'
           >
-            <span className="material-symbols-outlined text-base">
+            <span className='material-symbols-outlined text-lg'>
               filter_alt
             </span>
             {showMobileFilters ? "Hide Filters" : "Show Filters"}
           </button>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar */}
+        <div className='flex flex-col md:flex-row gap-6 lg:gap-8'>
           <aside
-            className={`${showMobileFilters ? "block" : "hidden"
-              } md:block w-full md:w-72 bg-white shadow-sm rounded-xl p-5 border border-gray-100 h-fit`}
+            className={`${
+              showMobileFilters ? "block" : "hidden"
+            } md:block w-full md:w-64 bg-white shadow-sm rounded-md p-4 h-fit`}
           >
-            <div className="mb-6">
-              <h3 className="font-semibold text-gray-800 mb-2 text-sm uppercase tracking-wide">
-                Sort By
-              </h3>
+            <h2 className='font-semibold mb-4'>Filters for Patent</h2>
+
+            <div className='mb-4'>
+              <h4 className='font-medium text-sm mb-2'>Sort By</h4>
               <select
-                className="w-full border border-gray-300 p-2 rounded-md text-sm focus:ring-[#d52727] focus:border-[#d52727]"
+                className='w-full border border-gray-300 p-2 rounded text-sm focus:border-[#d52727] focus:ring-1 focus:ring-[#d52727]'
                 value={sortAsc ? "asc" : "desc"}
                 onChange={(e) => setSortAsc(e.target.value === "asc")}
               >
-                <option value="asc">Title (A–Z)</option>
-                <option value="desc">Title (Z–A)</option>
+                <option value='asc'>Title (A–Z)</option>
+                <option value='desc'>Title (Z–A)</option>
               </select>
             </div>
 
-            <SidebarSection title="Type" items={sidebarData.type} />
-            <SidebarSection title="Concepts" items={sidebarData.concepts} />
+            <SidebarSection title='Type' items={sidebarData.type} />
+            <SidebarSection title='Concepts' items={sidebarData.concepts} />
           </aside>
 
-          {/* Main Content */}
-          <main className="flex-1">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-4 mb-6 gap-2">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Patent Results
-              </h2>
-              <p className="text-sm text-gray-600">
-                Showing {patents.length} of {totalResults} total
+          <main className='flex-1'>
+            <div className='flex items-center justify-between border-b pb-3 mb-6'>
+              <p className='text-sm text-gray-600'>
+                Showing {patents.length} of {totalResults} results
               </p>
+              <select
+                className='border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-[#d52727] focus:border-[#d52727]'
+                value={sortAsc ? "asc" : "desc"}
+                onChange={(e) => setSortAsc(e.target.value === "asc")}
+              >
+                <option value='asc'>Title (A–Z)</option>
+                <option value='desc'>Title (Z–A)</option>
+              </select>
             </div>
 
             {loading ? (
-              <p className="text-gray-600 text-center mt-6">
-                Loading patents...
-              </p>
+              <div className='text-center py-10'>
+                <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#d52727]'></div>
+                <p className='mt-2 text-sm text-gray-600'>Loading patents...</p>
+              </div>
             ) : patents.length === 0 ? (
-              <div className="text-center mt-10">
-                <p className="text-gray-600 mb-4">
-                  No patents found. Try adjusting your search criteria.
+              <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center'>
+                <span className='material-symbols-outlined text-gray-400 text-4xl mb-2'>
+                  search_off
+                </span>
+                <h3 className='text-lg font-medium text-gray-900 mb-1'>
+                  No patents found
+                </h3>
+                <p className='text-gray-500 text-sm'>
+                  Try adjusting your search or filter criteria
                 </p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-[#d52727]/10 text-[#d52727] rounded-md hover:bg-[#d52727]/20 transition"
+                  className='mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#d52727] hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
                 >
                   Refresh Search
                 </button>
               </div>
             ) : (
-              <div className="grid gap-4">
+              <div className='space-y-4'>
                 {sortedPatents.map((p, idx) => (
-                  <Link
+                  <article
                     key={idx}
-                    to={`/detailpatent/${p.openalex_url}`}
-                    className="block bg-white p-5 rounded-xl border border-gray-100 hover:border-[#d52727]/50 shadow-sm hover:shadow-md transition"
+                    className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200'
                   >
-                    <h3 className="font-semibold text-gray-900 text-lg mb-2 line-clamp-2">
-                      {p.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-2">
-                      <span className="font-medium text-gray-700">
-                        Organization:
-                      </span>{" "}
-                      {p.organization}
-                    </p>
-                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                      <span className="bg-gray-100 px-2 py-1 rounded-md">
-                        Type: {p.type}
-                      </span>
-                      {p.publication_date && (
-                        <span className="bg-gray-100 px-2 py-1 rounded-md">
-                          Published: {p.publication_date}
-                        </span>
-                      )}
-                      {p.concepts.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {p.concepts.map((c, i) => (
-                            <span
-                              key={i}
-                              className="px-2 py-1 bg-[#d52727]/10 text-[#d52727] rounded-md"
+                    <div className='p-4 sm:p-6'>
+                      <div className='flex items-start justify-between'>
+                        <div className='flex-1 min-w-0'>
+                          <h2 className='text-base sm:text-lg font-semibold text-gray-900 mb-1 leading-tight'>
+                            <Link
+                              to={`/detailpatent/${p.openalex_url}`}
+                              className='hover:text-[#d52727] transition-colors'
                             >
-                              {c}
+                              {p.title}
+                            </Link>
+                          </h2>
+
+                          <div className='mt-1 flex items-center text-xs text-gray-500'>
+                            <span className='flex items-center'>
+                              <span className='material-symbols-outlined text-sm mr-1'>
+                                business
+                              </span>
+                              {p.organization}
                             </span>
-                          ))}
+                            {p.publication_date && (
+                              <>
+                                <span className='mx-2'>•</span>
+                                <span>{p.publication_date}</span>
+                              </>
+                            )}
+                          </div>
+
+                          {p.lead && (
+                            <p className='mt-1 text-sm text-gray-600'>
+                              <span className='font-medium'>Lead:</span>{" "}
+                              {p.lead}
+                            </p>
+                          )}
                         </div>
-                      )}
+
+                        <div className='ml-4 flex-shrink-0'>
+                          <Link
+                            to={`/detailpatent/${p.openalex_url}`}
+                            className='inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-[#d52727] bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors'
+                          >
+                            View Details
+                          </Link>
+                        </div>
+                      </div>
+
+                      <div className='mt-3 flex flex-wrap gap-2'>
+                        {p.type && (
+                          <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+                            {p.type}
+                          </span>
+                        )}
+                        {p.concepts?.slice(0, 3).map((c, i) => (
+                          <span
+                            key={i}
+                            className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800'
+                          >
+                            {c}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </Link>
+                  </article>
                 ))}
               </div>
             )}
-            <div className='flex items-center justify-center mt-6'>
-              <div className='flex items-center space-x-1'>
-                <button
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                  className='p-2 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50 hidden sm:inline-flex'
-                  aria-label='First page'
-                >
-                  <FiChevronsLeft className='h-4 w-4' />
-                </button>
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className='p-2 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50'
-                  aria-label='Previous page'
-                >
-                  <FiChevronLeft className='h-4 w-4' />
-                </button>
+            {patents.length > 0 && (
+              <div className='mt-8 flex flex-col sm:flex-row items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4'>
+                <div className='mb-4 sm:mb-0'>
+                  <p className='text-sm text-gray-700'>
+                    Showing page{" "}
+                    <span className='font-medium'>{currentPage}</span> of{" "}
+                    <span className='font-medium'>
+                      {Math.ceil(totalResults / itemsPerPage)}
+                    </span>
+                  </p>
+                </div>
+                <nav className='flex items-center space-x-2'>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={currentPage === 1}
+                    className={`relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 text-sm font-medium ${
+                      currentPage === 1
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className='material-symbols-outlined text-base'>
+                      chevron_left
+                    </span>
+                    Previous
+                  </button>
 
-                {currentPage > 2 && (
-                  <>
-                    <button
-                      onClick={() => setCurrentPage(1)}
-                      className='min-w-[40px] h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-gray-100'
-                    >
-                      1
-                    </button>
-                    {currentPage > 3 && <span className='px-1 text-gray-500'>...</span>}
-                  </>
-                )}
+                  <div className='hidden sm:flex space-x-1'>
+                    {currentPage > 2 && (
+                      <>
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          className='relative inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium bg-white text-gray-700 hover:bg-gray-50'
+                        >
+                          1
+                        </button>
+                        {currentPage > 3 && (
+                          <span className='px-1 text-gray-500'>...</span>
+                        )}
+                      </>
+                    )}
 
-                {[
-                  currentPage - 1,
-                  currentPage,
-                  currentPage + 1
-                ]
-                  .filter(page => page >= 1)
-                  .map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`min-w-[40px] h-10 rounded-md flex items-center justify-center text-sm ${currentPage === page
-                        ? 'bg-red-600 text-white font-medium'
-                        : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      aria-current={currentPage === page ? 'page' : undefined}
-                    >
-                      {page}
-                    </button>
-                  ))}
+                    {[currentPage - 1, currentPage, currentPage + 1]
+                      .filter(
+                        (page) =>
+                          page >= 1 &&
+                          page <= Math.ceil(totalResults / itemsPerPage)
+                      )
+                      .map((page) => {
+                        const isCurrent = page === currentPage;
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`relative inline-flex items-center px-3 py-1.5 border text-sm font-medium ${
+                              isCurrent
+                                ? "z-10 bg-[#d52727] border-[#d52727] text-white"
+                                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      })}
+                  </div>
 
-                <button
-                  onClick={() => setCurrentPage(prev => prev + 1)}
-                  disabled={patents.length < itemsPerPage}
-                  className='p-2 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50'
-                  aria-label='Next page'
-                >
-                  <FiChevronRight className='h-4 w-4' />
-                </button>
+                  <button
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                    disabled={patents.length < itemsPerPage}
+                    className={`relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 text-sm font-medium ${
+                      patents.length < itemsPerPage
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    Next
+                    <span className='material-symbols-outlined text-base ml-1'>
+                      chevron_right
+                    </span>
+                  </button>
+                </nav>
               </div>
-            </div>
+            )}
           </main>
         </div>
       </div>

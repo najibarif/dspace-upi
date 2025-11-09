@@ -1,45 +1,44 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FiChevronLeft, FiChevronRight, FiChevronsLeft } from "react-icons/fi";
+import { useState, useEffect, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import FindBanner from "../../components/home/FindBanner";
 
 export default function Outreach() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [works, setWorks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [meta, setMeta] = useState({
+    total: 0,
+    page: 1,
+    per_page: 12,
+    total_pages: 0,
+  });
 
   const fetchOutreachWorks = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Try searching for community engagement works first
-      let response = await fetch(
-        "https://api.openalex.org/works?search=community%20engagement&per_page=10"
-      );
-      let data = await response.json();
+      const q = searchParams.get("q") || "";
+      const page = Number(searchParams.get("page") || 1);
+      const perPage = 12;
 
-      // If no results, try a broader search
-      if (!data.results || data.results.length === 0) {
-        response = await fetch(
-          "https://api.openalex.org/works?search=outreach&per_page=10"
-        );
-        data = await response.json();
-      }
-
-      // If still no results, try one more search term
-      if (!data.results || data.results.length === 0) {
-        response = await fetch(
-          "https://api.openalex.org/works?search=public%20engagement&per_page=10"
-        );
-        data = await response.json();
-      }
+      let searchTerm = q || "community engagement OR outreach OR public engagement";
+      const url = `https://api.openalex.org/works?search=${encodeURIComponent(searchTerm)}&page=${page}&per_page=${perPage}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
 
       setWorks(data.results || []);
+      const total = data.meta?.count || 0;
+      setMeta({
+        total,
+        page,
+        per_page: perPage,
+        total_pages: Math.ceil(total / perPage),
+      });
     } catch (err) {
-      setError("⚠️ Gagal memuat data dari OpenAlex. Coba lagi nanti.");
+      setError("Failed to load outreach data. Please try again later.");
       console.error("API Error:", err);
       setWorks([]);
     } finally {
@@ -49,243 +48,235 @@ export default function Outreach() {
 
   useEffect(() => {
     fetchOutreachWorks();
-  }, []);
+  }, [searchParams]);
+
+  const goToPage = (p) => {
+    const max = meta.total_pages || 0;
+    if (p < 1) p = 1;
+    if (max && p > max) p = max;
+    const params = new URLSearchParams(searchParams);
+    params.set("page", String(p));
+    setSearchParams(params);
+  };
+
+  const pageNumbers = useMemo(() => {
+    const total = meta.total_pages || 0;
+    const current = meta.page || 1;
+    if (total <= 1) return [];
+    const delta = 2;
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+    if (current <= 2) end = Math.min(total, 1 + delta * 2);
+    if (current >= total - 1) start = Math.max(1, total - delta * 2);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [meta.total_pages, meta.page]);
+
+  const startIndex = works.length > 0 ? (meta.page - 1) * meta.per_page + 1 : 0;
+  const endIndex = works.length > 0 ? Math.min(startIndex + works.length - 1, meta.total) : 0;
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      {/* Banner */}
+    <div className='bg-gray-50 min-h-screen'>
       <FindBanner />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-8">
-        {/* Mobile Filter Button */}
-        <div className="md:hidden mb-5">
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8'>
+        <div className='md:hidden mb-4'>
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] transition"
+            className='flex items-center gap-2 px-4 py-2 bg-[#d52727] text-white rounded-md text-sm font-medium hover:bg-[#b31f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#d52727] transition-colors w-full justify-center'
           >
-            <span className="material-symbols-outlined text-base">
+            <span className='material-symbols-outlined text-lg'>
               filter_alt
             </span>
             {showMobileFilters ? "Hide Filters" : "Show Filters"}
           </button>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar */}
+        <div className='flex flex-col md:flex-row gap-6 lg:gap-8'>
           <aside
-            className={`${showMobileFilters ? "block" : "hidden"
-              } md:block w-full md:w-72 bg-white shadow-sm rounded-xl border border-gray-100 p-5 h-fit`}
+            className={`${
+              showMobileFilters ? "block" : "hidden"
+            } md:block w-full md:w-64 bg-white shadow-sm rounded-md p-4 h-fit`}
           >
-            <h2 className="font-semibold text-gray-800 mb-4 text-sm uppercase tracking-wide">
-              Filter Outreach
-            </h2>
+            <h2 className='font-semibold mb-4'>Filters for Outreach</h2>
 
-            {/* Filter Sections */}
-            <div className="space-y-6">
-              {/* SDGs */}
-              <div>
-                <h4 className="font-medium text-gray-700 text-sm mb-3">
-                  Sustainable Development Goals
-                </h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]"
-                      />
-                      <span>SDG 4 – Quality Education</span>
-                    </label>
-                  </li>
-                  <li>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]"
-                      />
-                      <span>SDG 13 – Climate Action</span>
-                    </label>
-                  </li>
-                </ul>
-                <button className="text-[#d52727] text-sm mt-2 hover:underline">
-                  See more &gt;
-                </button>
+            <div className='mb-6'>
+              <h3 className='font-medium text-sm mb-2'>Sustainable Development Goals</h3>
+              <div className='space-y-2 text-sm text-gray-600'>
+                <label className='flex items-center gap-2'>
+                  <input
+                    type='checkbox'
+                    className='rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]'
+                  />
+                  <span className='flex-1'>SDG 4 – Quality Education</span>
+                </label>
+                <label className='flex items-center gap-2'>
+                  <input
+                    type='checkbox'
+                    className='rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]'
+                  />
+                  <span className='flex-1'>SDG 13 – Climate Action</span>
+                </label>
               </div>
+            </div>
 
-              {/* Concepts */}
-              <div>
-                <h4 className="font-medium text-gray-700 text-sm mb-3">
-                  Concepts
-                </h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]"
-                      />
-                      <span>Community Engagement</span>
-                    </label>
-                  </li>
-                </ul>
-                <button className="text-[#d52727] text-sm mt-2 hover:underline">
-                  See more &gt;
-                </button>
+            <div className='mb-6'>
+              <h3 className='font-medium text-sm mb-2'>Concepts</h3>
+              <div className='space-y-2 text-sm text-gray-600'>
+                <label className='flex items-center gap-2'>
+                  <input
+                    type='checkbox'
+                    className='rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]'
+                  />
+                  <span className='flex-1'>Community Engagement</span>
+                </label>
               </div>
+            </div>
 
-              {/* Time Period */}
-              <div>
-                <h4 className="font-medium text-gray-700 text-sm mb-3">
-                  Time Period
-                </h4>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]"
-                      />
-                      <span>Last 5 years</span>
-                    </label>
-                  </li>
-                </ul>
-                <button className="text-[#d52727] text-sm mt-2 hover:underline">
-                  See more &gt;
-                </button>
+            <div className='mb-6'>
+              <h3 className='font-medium text-sm mb-2'>Time Period</h3>
+              <div className='space-y-2 text-sm text-gray-600'>
+                <label className='flex items-center gap-2'>
+                  <input
+                    type='checkbox'
+                    className='rounded border-gray-300 text-[#d52727] focus:ring-[#d52727]'
+                  />
+                  <span className='flex-1'>Last 5 years</span>
+                </label>
               </div>
             </div>
           </aside>
 
-          {/* Main Content */}
-          <main className="flex-1">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b pb-4 mb-6">
-              <p className="text-sm text-gray-600">
-                {loading
-                  ? "Loading outreach works..."
-                  : error
-                    ? error
-                    : `${works.length} results found`}
+          <main className='flex-1'>
+            <div className='flex items-center justify-between border-b pb-3 mb-6'>
+              <p className='text-sm text-gray-600'>
+                Showing {startIndex}-{endIndex} of {meta.total} results
               </p>
-              <div className="flex gap-6 text-sm mt-3 sm:mt-0">
-                <button className="text-gray-700 hover:text-[#d52727] transition">
-                  Start date (descending) &gt;
-                </button>
-                <button className="text-[#d52727] hover:underline">
-                  Export results
-                </button>
-              </div>
             </div>
 
-            {/* Results */}
             {loading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#d52727]"></div>
-                <p className="mt-3 text-sm text-gray-600">
-                  Memuat data outreach...
-                </p>
+              <div className='text-center py-10'>
+                <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#d52727]'></div>
+                <p className='mt-2 text-sm text-gray-600'>Loading outreach...</p>
               </div>
             ) : error ? (
-              <div className="text-center py-12">
-                <p className="text-red-500">{error}</p>
-                <button
-                  onClick={fetchOutreachWorks}
-                  className="mt-4 px-4 py-2 bg-[#d52727]/10 text-[#d52727] rounded-md hover:bg-[#d52727]/20 transition"
-                >
-                  Coba Lagi
-                </button>
+              <div className='bg-red-50 border-l-4 border-red-500 p-4 mb-6'>
+                <div className='flex'>
+                  <div className='flex-shrink-0'>
+                    <span className='material-symbols-outlined text-red-500'>
+                      error
+                    </span>
+                  </div>
+                  <div className='ml-3'>
+                    <p className='text-sm text-red-700'>{error}</p>
+                  </div>
+                </div>
               </div>
             ) : works.length === 0 ? (
-              <div className="text-center py-12 text-gray-600">
-                Tidak ada data outreach ditemukan.
+              <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center'>
+                <span className='material-symbols-outlined text-gray-400 text-4xl mb-2'>
+                  search_off
+                </span>
+                <h3 className='text-lg font-medium text-gray-900 mb-1'>
+                  No outreach found
+                </h3>
+                <p className='text-gray-500 text-sm'>
+                  Try adjusting your search or filter criteria
+                </p>
               </div>
             ) : (
-              <div className="grid gap-5">
+              <div className='space-y-4'>
                 {works.map((work) => (
-                  <Link
+                  <article
                     key={work.id}
-                    to={`/outreach/${work.id.replace("https://openalex.org/", "")}`}
-                    className="block bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#d52727]/50 transition p-5"
+                    className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200'
                   >
-                    <h2 className="font-semibold text-gray-900 text-lg mb-2 line-clamp-2">
-                      {work.title}
-                    </h2>
-                    <p className="text-sm text-gray-600 line-clamp-3">
-                      {work.abstract_inverted_index
-                        ? Object.entries(work.abstract_inverted_index)
-                          .sort((a, b) => a[1][0] - b[1][0])
-                          .map((e) => e[0])
-                          .join(" ")
-                        : "No abstract available."}
-                    </p>
-                    <span className="text-[#d52727] text-sm mt-3 block font-medium">
-                      View Details &gt;
-                    </span>
-                  </Link>
+                    <div className='p-4 sm:p-6'>
+                      <h2 className='text-base sm:text-lg font-semibold text-gray-900 mb-1 leading-tight'>
+                        <Link
+                          to={`/outreach/${work.id.replace(
+                            "https://openalex.org/",
+                            ""
+                          )}`}
+                          className='hover:text-[#d52727] transition-colors'
+                        >
+                          {work.title}
+                        </Link>
+                      </h2>
+                      <p className='text-sm text-gray-600 line-clamp-3 mt-2'>
+                        {work.abstract_inverted_index
+                          ? Object.entries(work.abstract_inverted_index)
+                              .sort((a, b) => a[1][0] - b[1][0])
+                              .map((e) => e[0])
+                              .join(" ")
+                          : "No abstract available."}
+                      </p>
+                    </div>
+                  </article>
                 ))}
+
+                {meta.total_pages > 1 && (
+                  <div className='mt-8 flex flex-col sm:flex-row items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4'>
+                    <div className='mb-4 sm:mb-0'>
+                      <p className='text-sm text-gray-700'>
+                        Showing page{" "}
+                        <span className='font-medium'>{meta.page}</span> of{" "}
+                        <span className='font-medium'>{meta.total_pages}</span>
+                      </p>
+                    </div>
+                    <nav className='flex items-center space-x-2'>
+                      <button
+                        onClick={() => goToPage(meta.page - 1)}
+                        disabled={meta.page <= 1}
+                        className={`relative inline-flex items-center px-3 py-1.5 rounded-l-md border border-gray-300 text-sm font-medium ${
+                          meta.page <= 1
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-white text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <span className='material-symbols-outlined text-base'>
+                          chevron_left
+                        </span>
+                        Previous
+                      </button>
+
+                      <div className='hidden sm:flex space-x-1'>
+                        {pageNumbers.map((pageNum) => {
+                          const isCurrent = pageNum === meta.page;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => goToPage(pageNum)}
+                              className={`relative inline-flex items-center px-3 py-1.5 border text-sm font-medium ${
+                                isCurrent
+                                  ? "z-10 bg-[#d52727] border-[#d52727] text-white"
+                                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => goToPage(meta.page + 1)}
+                        disabled={meta.page >= meta.total_pages}
+                        className={`relative inline-flex items-center px-3 py-1.5 rounded-r-md border border-gray-300 text-sm font-medium ${
+                          meta.page >= meta.total_pages
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-white text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        Next
+                        <span className='material-symbols-outlined text-base ml-1'>
+                          chevron_right
+                        </span>
+                      </button>
+                    </nav>
+                  </div>
+                )}
               </div>
             )}
-            <div className='flex items-center justify-center mt-6'>
-              <div className='flex items-center space-x-1'>
-                <button
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                  className='p-2 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50 hidden sm:inline-flex'
-                  aria-label='First page'
-                >
-                  <FiChevronsLeft className='h-4 w-4' />
-                </button>
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className='p-2 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50'
-                  aria-label='Previous page'
-                >
-                  <FiChevronLeft className='h-4 w-4' />
-                </button>
-
-                {currentPage > 2 && (
-                  <>
-                    <button
-                      onClick={() => setCurrentPage(1)}
-                      className='min-w-[40px] h-10 rounded-md flex items-center justify-center text-gray-700 hover:bg-gray-100'
-                    >
-                      1
-                    </button>
-                    {currentPage > 3 && <span className='px-1 text-gray-500'>...</span>}
-                  </>
-                )}
-
-                {[
-                  currentPage - 1,
-                  currentPage,
-                  currentPage + 1
-                ]
-                  .filter(page => page >= 1)
-                  .map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`min-w-[40px] h-10 rounded-md flex items-center justify-center text-sm ${currentPage === page
-                        ? 'bg-red-600 text-white font-medium'
-                        : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      aria-current={currentPage === page ? 'page' : undefined}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                <button
-                  onClick={() => setCurrentPage(prev => prev + 1)}
-                  disabled={works.length < itemsPerPage}
-                  className='p-2 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-50'
-                  aria-label='Next page'
-                >
-                  <FiChevronRight className='h-4 w-4' />
-                </button>
-              </div>
-            </div>
           </main>
         </div>
       </div>

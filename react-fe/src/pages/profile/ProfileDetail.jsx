@@ -46,7 +46,6 @@ export default function AuthorDetail() {
     fetchData();
   }, [id]);
 
-  // Pastikan semua Hooks dipanggil sebelum conditional return
   const isLoading = loading;
   const loadError = error;
 
@@ -126,7 +125,6 @@ export default function AuthorDetail() {
     { icon: "school", label: "Thesis" },
   ];
 
-  // Sorting dan pagination untuk tab Paper
   const sortedWorks = useMemo(() => {
     return [...(Array.isArray(works) ? works : [])].sort(
       (a, b) => (b?.publication_year || 0) - (a?.publication_year || 0)
@@ -152,7 +150,6 @@ export default function AuthorDetail() {
   );
 
   useEffect(() => {
-    // Reset ke halaman 1 saat author berubah atau data works berubah signifikan
     setPaperPage(1);
   }, [id]);
 
@@ -277,7 +274,7 @@ export default function AuthorDetail() {
                     2,
                     "0"
                   )} 1.png`;
-                  const imageUrl = `http://127.0.0.1:8000/storage/sdgs/${encodeURIComponent(
+                  const imageUrl = `/storage/sdgs/${encodeURIComponent(
                     fileName
                   )}`;
                   return (
